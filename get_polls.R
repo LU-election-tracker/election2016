@@ -1,13 +1,16 @@
 library(rvest)
+library(tidyr)
 
 # Scrapes a given Real Clear Politics page and writes updated csv files with
 # most recent data and complete poll data
 scrape_rcp <- function(rcp_address, recent_out, full_out) {
   rcp <- html(rcp_address)
   recent <- rcp %>% html_nodes(".data") %>% .[[1]] %>% html_table()
+  recent <- separate(data = recent, col = Date, into = c("Start", "End"), sep = " - ")
   full <- rcp %>% html_nodes(".data") %>% .[[2]] %>% html_table()
-  write.table(recent, recent_out, quote = FALSE)
-  write.table(full, full_out, quote = FALSE)
+  full <- separate(data = full, col = Date, into = c("Start", "End"), sep = " - ")
+  write.table(recent, recent_out, sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(full, full_out, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
 # Updates Real Clear Politics poll csv files, outputting to the given folder.
@@ -20,6 +23,11 @@ update_rcp <- function(folder) {
   scrape_rcp(reps_address, 
              file.path(folder, "rcp_gop_recent.csv"),
              file.path(folder, "rcp_gop_full.csv"))
+}
+
+# Creates plots for a given rcp table
+plot_rcp <- function(table_file) {
+  table - read.csv(file, sep = "\t")
 }
 
 # Main update function. Updates polling data and graphs.
