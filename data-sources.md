@@ -1,9 +1,14 @@
 Data sources
 ============
 
-## Initial ideas for data sources
-- realclearpolitics.com
-- pollster.com
+## Polls
+Reliable collection of polling data: realclearpolitics.com
+Left-leaning polling data: pollster.com
 
-## FEC data
-http://docquery.fec.gov/pres/
+## Fundraising
+Composite funding data: https://www.opensecrets.org/pres16/outsidegroups.php
+FEC data (limited): http://docquery.fec.gov/pres/
+
+## Articles
+Super PAC analysis: http://www.politifact.com/truth-o-meter/statements/2015/sep/30/bernie-s/bernie-sanders-only-presidential-candidates-withou/
+
