@@ -72,31 +72,31 @@ scrape_rcp <- function(rcp_address, recent_out, full_out, sample = TRUE) {
 }
 
 # Updates Real Clear Politics poll csv files, outputting to the given folder.
-update_rcp <- function(folder) {
-  dems_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_democratic_presidential_nomination-3824.html"
-  reps_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_republican_presidential_nomination-3823.html"
-  scrape_rcp(dems_address, 
-             file.path(folder, "rcp_dem_recent.csv"),
-             file.path(folder, "rcp_dem_full.csv"))
-  scrape_rcp(reps_address, 
-             file.path(folder, "rcp_gop_recent.csv"),
-             file.path(folder, "rcp_gop_full.csv"),
+update_rcp <- function(main_folder, data_folder) {
+  dem_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_democratic_presidential_nomination-3824.html"
+  gop_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_republican_presidential_nomination-3823.html"
+  scrape_rcp(dem_address, 
+             file.path(data_folder, "rcp_dem_recent.csv"),
+             file.path(data_folder, "rcp_dem_full.csv"))
+  scrape_rcp(gop_address, 
+             file.path(data_folder, "rcp_gop_recent.csv"),
+             file.path(data_folder, "rcp_gop_full.csv"),
              sample = FALSE)
 }
 
 # Creates plots for a given rcp table
-plot_rcp <- function(main_folder) {
+plot_rcp <- function(main_folder, data_folder) {
   
   # Opens poll summary files into data frames
-  dem <- read.csv(file.path(main_folder, "rcp_dem_full.csv"), sep = "\t")
-  gop <- read.csv(file.path(main_folder, "rcp_gop_full.csv"), sep = "\t")
+  dem <- read.csv(file.path(data_folder, "rcp_dem_full.csv"), sep = "\t")
+  gop <- read.csv(file.path(data_folder, "rcp_gop_full.csv"), sep = "\t")
   
   # Formats data frames and plots party averages over time
   dem_candidates <- c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
   gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz", 
                       "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
                       "Pataki", "Jindal", "Graham")
-  dem_plot <- plot_over_time(format_polls(dem, dem_candidates), "dems.png", main_folder)
+  dem_plot <- plot_over_time(format_polls(dem, dem_candidates), "dem.png", main_folder)
   gop_plot <- plot_over_time(format_polls(gop, gop_candidates), "gop.png", 
                              main_folder, n_colors = 15, set = "Set1")
 }
@@ -108,21 +108,24 @@ plot_over_time <- function(df, plot_name, main_folder, n_colors = 6, set = "RdBu
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
   
-  # Plots and saves to file
+  # Plots given polls by smooth weekly average
   ggplot(df, aes(x = End, y = avg, color = Candidate)) + 
     geom_smooth(aes(group = Candidate), method = "loess") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_color_manual(values = full_pal(n_colors)) +
     scale_x_date() +
     labs(x = "Month", y = "Average Percent Support")
-  ggsave(file = file.path(main_folder, plot_name))
+  
+  # Saves to "www" folder for use with Shiny. 
+  # Folder name is fixed so no argument necessary
+  ggsave(file = file.path(main_folder, "www", plot_name))
 }
 
 # Archives old poll information
-archive <- function(main_folder, data_folder) {
+archive <- function(main_folder, data_folder, archive_folder) {
   
   # Gets all current files
-  dem_plot <-"dems.png"
+  dem_plot <-"dem.png"
   dem_recent <- "rcp_dem_recent.csv"
   dem_full <- "rcp_dem_full.csv"
   gop_plot <- "gop.png"
@@ -130,33 +133,39 @@ archive <- function(main_folder, data_folder) {
   gop_full <- "rcp_gop_full.csv"
   
   # Creates an archive folder for the current day. Overwrites if exists
-  archive <- file.path(data_folder, as.character(Sys.Date()))
+  archive <- file.path(archive_folder, as.character(Sys.Date()))
   dir.create(archive, showWarnings = FALSE)
   
   # Archives current files. Overwrites if exists
-  file.copy(file.path(main_folder, dem_plot), file.path(archive, dem_plot), overwrite = TRUE)
-  file.copy(file.path(main_folder, dem_recent), file.path(archive, dem_recent), overwrite = TRUE)
-  file.copy(file.path(main_folder, dem_full), file.path(archive, dem_full), overwrite = TRUE)
-  file.copy(file.path(main_folder, gop_plot), file.path(archive, gop_plot), overwrite = TRUE)
-  file.copy(file.path(main_folder, gop_recent), file.path(archive, gop_recent), overwrite = TRUE)
-  file.copy(file.path(main_folder, gop_full), file.path(archive, gop_full), overwrite = TRUE)
+  file.copy(file.path(data_folder, dem_plot), file.path(archive, dem_plot), overwrite = TRUE)
+  file.copy(file.path(data_folder, dem_recent), file.path(archive, dem_recent), overwrite = TRUE)
+  file.copy(file.path(data_folder, dem_full), file.path(archive, dem_full), overwrite = TRUE)
+  file.copy(file.path(data_folder, gop_plot), file.path(archive, gop_plot), overwrite = TRUE)
+  file.copy(file.path(data_folder, gop_recent), file.path(archive, gop_recent), overwrite = TRUE)
+  file.copy(file.path(data_folder, gop_full), file.path(archive, gop_full), overwrite = TRUE)
 }
 
 
 # Main update function. Updates polling data and graphs.
 track <- function(main_folder) {
-  data_folder <- file.path(main_folder, "archive")
+  
+  # Creates folder to hold poll data and folder to hold shiny data
+  data_folder <- file.path(main_folder, "data")
+  shiny_folder <- file.path(main_folder, "www")
+  archive_folder <- file.path(data_folder, "archive")
   if(dir.exists(main_folder) == FALSE) { dir.create(main_folder) }
   if(dir.exists(data_folder) == FALSE) { dir.create(data_folder) }
+  if(dir.exists(shiny_folder) == FALSE) { dir.create(shiny_folder) }
+  if(dir.exists(archive_folder) == FALSE) { dir.create(archive_folder) }
   
   # Updates Real Clear Politics polls
-  update_rcp(main_folder)
+  update_rcp(main_folder, data_folder)
   
   # Creates plots
-  plot_rcp(main_folder)
+  plot_rcp(main_folder, data_folder)
   
   # Archives data by current date
-  invisible(archive(main_folder, data_folder))
+  invisible(archive(main_folder, data_folder, archive_folder))
 }
 
 # Sample usage:
