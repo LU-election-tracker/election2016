@@ -30,11 +30,11 @@ format_date <- function(d, year = 2015, interval = "week") {
 format_polls <- function(df, candidates, ids = c("End", "Poll")) {
   
   # Removes RCP average
-  rcp_row <- which(apply(dem, 1, function(x) any(grepl("RCP Average", x))))
+  rcp_row <- which(apply(df, 1, function(x) any(grepl("RCP Average", x))))
   df <- df[-c(rcp_row),]
   
   # Removes all polls before Qunnipiac poll on 2/26/15
-  last_row <- which(apply(dem, 1, function(x) any(grepl("2/26", x))))
+  last_row <- which(apply(df, 1, function(x) any(grepl("2/26", x))))
   df <- df[1:last_row,]
   
   # Converts end column to dates
