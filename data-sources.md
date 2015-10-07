@@ -13,3 +13,6 @@ Data sources
 ## Articles
 - Super PAC analysis: http://www.politifact.com/truth-o-meter/statements/2015/sep/30/bernie-s/bernie-sanders-only-presidential-candidates-withou/
 
+## Political scorecards 
+- TODO (PCA plot)
+
