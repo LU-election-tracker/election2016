@@ -6,6 +6,15 @@ library(dplyr)
 library(RColorBrewer)
 
 ######
+### GLOBAL VARIABLES
+######
+
+dem_candidates <- c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
+gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz", 
+                    "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
+                    "Pataki", "Jindal", "Graham")
+
+######
 ### UTILITY functioNs
 ######
 
@@ -16,12 +25,8 @@ format_date <- function(d, year = 2015, interval = "week") {
   d <- floor_date(d, interval)
 }
 
-# Formats given RCP poll and melts it by end date.
+# Formats given RCP poll and melts it by end date for given list of candidates.
 # Cuts off all polls before 2/26/15
-# For dems, candidates param should be:
-#   c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
-# For reps, candidates param should be:
-# 
 format_polls <- function(df, candidates, ids = c("End", "Poll")) {
   
   # Removes RCP average
@@ -44,7 +49,6 @@ format_polls <- function(df, candidates, ids = c("End", "Poll")) {
 ######
 ### MAIN FUNCTIONS
 ######
-
 
 # Scrapes a given Real Clear Politics page and writes updated csv files with
 # most recent data and complete poll data. Splits sample column into number
@@ -71,6 +75,12 @@ scrape_rcp <- function(rcp_address, recent_out, full_out, sample = TRUE) {
   write.table(full, full_out, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
+# Scrapes the Open Secrets website for funding information
+scrape_os<- function(os_address, funding_out) {
+  opensecrets <- html("https://www.opensecrets.org/pres16/outsidegroups.php")
+  funding <- opensecrets %>% html_node("table") %>% html_table()
+}
+
 # Updates Real Clear Politics poll csv files, outputting to the given folder.
 update_rcp <- function(main_folder, data_folder) {
   dem_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_democratic_presidential_nomination-3824.html"
@@ -92,23 +102,19 @@ plot_rcp <- function(main_folder, data_folder) {
   gop <- read.csv(file.path(data_folder, "rcp_gop_full.csv"), sep = "\t")
   
   # Formats data frames and plots party averages over time
-  dem_candidates <- c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
-  gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz", 
-                      "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
-                      "Pataki", "Jindal", "Graham")
-  dem_plot <- plot_over_time(format_polls(dem, dem_candidates), "dem.png", main_folder)
-  gop_plot <- plot_over_time(format_polls(gop, gop_candidates), "gop.png", 
-                             main_folder, n_colors = 15, set = "Set1")
+  dem_plot <- plot_over_time(format_polls(dem, dem_candidates), main_folder, "dem.png")
+  gop_plot <- plot_over_time(format_polls(gop, gop_candidates), main_folder, "gop.png", 
+                             n_colors = 15, set = "Set1")
 }
 
 # Plots candidates polling results over a given time by week
-# TODO - specify time range
-plot_over_time <- function(df, plot_name, main_folder, n_colors = 6, set = "RdBu") {
+plot_over_time <- function(df, main_folder = "", plot_name = "", n_colors = 6, 
+                           set = "RdBu") {
   
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
   
-  # Plots given polls by smooth weekly average
+  # Base plot for given polls
   ggplot(df, aes(x = End, y = avg, color = Candidate)) + 
     geom_smooth(aes(group = Candidate), method = "loess") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -116,9 +122,10 @@ plot_over_time <- function(df, plot_name, main_folder, n_colors = 6, set = "RdBu
     scale_x_date() +
     labs(x = "Month", y = "Average Percent Support")
   
-  # Saves to "www" folder for use with Shiny. 
-  # Folder name is fixed so no argument necessary
-  ggsave(file = file.path(main_folder, "www", plot_name))
+  # Saves to "www" folder as png image if folder and plot name given
+  if ((plot_name != "") && (main_folder != "")) {
+    ggsave(file = file.path(main_folder, "www", plot_name))
+  }
 }
 
 # Archives old poll information
