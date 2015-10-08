@@ -12,22 +12,23 @@ library(RColorBrewer)
 dem_candidates <- c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
 gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz", 
                     "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
-                    "Pataki", "Jindal", "Graham")
+                    "Pataki", "Jindal", "Graham", "Walker")
 
 ######
-### UTILITY functioNs
+### UTILITY FUNCTIONS
 ######
-
-# Formats a given RCP poll date using lubridate.
-# Rounds value to nearest given interval
-format_date <- function(d, year = 2015, interval = "week") {
-  d <- parse_date_time(c(d), "%m%d") + years(year)
-  d <- floor_date(d, interval)
-}
 
 # Formats given RCP poll and melts it by end date for given list of candidates.
 # Cuts off all polls before 2/26/15
 format_polls <- function(df, candidates, ids = c("End", "Poll")) {
+  
+  # Removes candidates from table if no longer in race
+  column_names <- colnames(df)
+  for (can in candidates) {
+    if (is.element(can, column_names) == FALSE) {
+      candidates <- setdiff(candidates, c(can))
+    }
+  }
   
   # Removes RCP average
   rcp_row <- which(apply(df, 1, function(x) any(grepl("RCP Average", x))))
@@ -44,6 +45,31 @@ format_polls <- function(df, candidates, ids = c("End", "Poll")) {
   df <- melt(df, id.vars = ids, measure.vars = candidates, 
                       variable.name = "Candidate")
   df %>% group_by(End, Candidate) %>% summarise(avg = mean(as.numeric(value)))
+}
+
+# Formats given funding table and melts it
+format_funding <- function(df, na.rm = TRUE) {
+  
+  # Drops organization column
+  df <- df[c("Candidate", "Type", "Total Raised")]
+  
+  # Renames funding column to 'Raised'
+  names(df)[names(df) == 'Total Raised'] <- 'Raised'
+  
+  # Removes NA and zero values if specified
+  if (na.rm) {
+    df <- df[df$Raised != "0N/A",]
+    df <- df[df$Raised != "$0",]
+  }
+  
+  # Removes dollar signs and columns from funding column
+  df$Raised <- substring(df$Raised, 2)
+  df$Raised <- as.numeric(gsub(",","", df$Raised))
+  
+  # Melts data frame, summing super PAC, campaign and other spending
+  df <- melt(df, na.rm = na.rm)
+  View(df)
+  df %>% group_by(Candidate, Type, variable) %>% summarise(Total = sum(as.numeric(value)))
 }
 
 ######
@@ -76,7 +102,7 @@ scrape_rcp <- function(rcp_address, recent_out, full_out, sample = TRUE) {
 }
 
 # Scrapes the Open Secrets website for funding information
-scrape_os<- function(os_address, funding_out) {
+scrape_os<- function() {
   opensecrets <- html("https://www.opensecrets.org/pres16/outsidegroups.php")
   funding <- opensecrets %>% html_node("table") %>% html_table()
 }
@@ -104,7 +130,7 @@ plot_rcp <- function(main_folder, data_folder) {
   # Formats data frames and plots party averages over time
   dem_plot <- plot_over_time(format_polls(dem, dem_candidates), main_folder, "dem.png")
   gop_plot <- plot_over_time(format_polls(gop, gop_candidates), main_folder, "gop.png", 
-                             n_colors = 15, set = "Set1")
+                             n_colors = 16, set = "Set1")
 }
 
 # Plots candidates polling results over a given time by week
@@ -126,6 +152,11 @@ plot_over_time <- function(df, main_folder = "", plot_name = "", n_colors = 6,
   if ((plot_name != "") && (main_folder != "")) {
     ggsave(file = file.path(main_folder, "www", plot_name))
   }
+}
+
+# Plots candidates funding totals
+plot_funding <- function() {
+  
 }
 
 # Archives old poll information

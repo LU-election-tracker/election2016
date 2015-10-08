@@ -7,7 +7,7 @@ dem_candidates <- c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
 gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz", 
                     "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
                     "Pataki", "Jindal", "Graham", "Walker")
-plot_types <- c("Smooth" = "smooth", "Line" = "line")
+plot_types <- c("Smooth" = "smooth", "Line" = "line", "Both" = "both")
 funding_types <- c("Campaign", "Super PAC", "Other")
 
 ######

@@ -10,10 +10,13 @@ library(Cairo)
 ### VARIABLES, UTILITY FUNCTIONS AND CALLS
 ######
 
-tracking <- 'C:/Users/Navi/Dropbox/Public/Junior Year/R/election2016/get_polls.R'
+# Assumes tracking file in same folder
+tracking <- 'get_polls.R'
 source(tracking)
 
-main_folder <- "C:/Users/Navi/Dropbox/Public/Junior Year/R/election2016"
+# Gets parent folder
+#main_folder <- "C:/Users/Navi/Dropbox/Public/Junior Year/R/election2016"
+main_folder <- "./"
 data_folder <- file.path(main_folder, "data")
 
 # Variables for plotting democrats with ggplot
@@ -38,10 +41,13 @@ shinyServer(function(input, output) {
   
   # Plots using ggplot depending on type of plot
   output$dem_plot <- renderPlot({
+    
+    # TODO - update candidates faster
     candidates <- setdiff(dem_candidates, updated_dem())
     for (c in candidates) {
       dem <- subset(dem, Candidate != c)
     }
+    
     if (input$dem_plot_type == "smooth") {
       ggplot(dem, aes(x = End, y = avg, color = Candidate)) + 
         geom_smooth(aes(group = Candidate), method = "loess") +
@@ -54,6 +60,15 @@ shinyServer(function(input, output) {
       ggplot(dem, aes(x = End, y = avg, color = Candidate)) + 
         geom_line(aes(group = Candidate)) +
         geom_point() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        scale_color_manual(values = dem_pal(6)) +
+        scale_x_date() +
+        labs(x = "Month", y = "Average Percent Support")
+      
+    } else if (input$dem_plot_type == "both") {
+      ggplot(dem, aes(x = End, y = avg, color = Candidate)) + 
+        geom_smooth(aes(group = Candidate), method = "loess") +
+        geom_line(aes(group = Candidate)) +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
         scale_color_manual(values = dem_pal(6)) +
         scale_x_date() +
@@ -69,24 +84,36 @@ shinyServer(function(input, output) {
   ### Republican plotting functions
   
   output$gop_plot <- renderPlot({
+    
+    # TODO - update candidates faster
     candidates <- setdiff(gop_candidates, updated_gop())
     for (c in candidates) {
       gop <- subset(gop, Candidate != c)
     }
-    if (input$dem_plot_type == "smooth") {
+    
+    if (input$gop_plot_type == "smooth") {
       ggplot(gop, aes(x = End, y = avg, color = Candidate)) + 
         geom_smooth(aes(group = Candidate), method = "loess") +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = gop_pal(15)) +
+        scale_color_manual(values = gop_pal(16)) +
         scale_x_date() +
         labs(x = "Month", y = "Average Percent Support")
       
-    } else if (input$dem_plot_type == "line") {
+    } else if (input$gop_plot_type == "line") {
       ggplot(gop, aes(x = End, y = avg, color = Candidate)) + 
         geom_line(aes(group = Candidate)) +
         geom_point() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = gop_pal(15)) +
+        scale_color_manual(values = gop_pal(16)) +
+        scale_x_date() +
+        labs(x = "Month", y = "Average Percent Support")
+      
+    } else if (input$gop_plot_type == "both") {
+      ggplot(gop, aes(x = End, y = avg, color = Candidate)) +
+        geom_smooth(aes(group = Candidate), method = "loess") +
+        geom_line(aes(group = Candidate)) +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        scale_color_manual(values = gop_pal(16)) +
         scale_x_date() +
         labs(x = "Month", y = "Average Percent Support")
     }
