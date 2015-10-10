@@ -8,7 +8,9 @@ gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz",
                     "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
                     "Pataki", "Jindal", "Graham", "Walker")
 plot_types <- c("Smooth" = "smooth", "Line" = "line", "Both" = "both")
-funding_types <- c("Campaign", "Super PAC", "Other")
+funding_types <- c("Campaign" = "campaign", "Super PAC" = "super_pac", 
+                   "Other" = "other")
+funding_groups <- c("All" = "all", "Democrats" = "dem", "Republicans" = "gop")
 
 ######
 ### SITE UI
@@ -58,14 +60,17 @@ shinyUI(navbarPage("LU Election Tracker 2016",
   tabPanel("Funding",
            sidebarLayout(
              sidebarPanel(
-               selectInput("fundingSource", "Funding Source:", 
+               selectInput("funding_source", "Source:", 
                            choices=funding_types
+               ),
+               selectInput("funding_groups", "Candidates:", 
+                           choices=funding_groups
                )
              ),
              mainPanel(
-               
+               plotOutput("funding_plot", height = "450px", width = "850px"
+               )
              )
-             #plotOutput("plot")
            )
   ),
 
