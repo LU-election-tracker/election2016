@@ -153,24 +153,39 @@ plot_rcp <- function(main_folder, data_folder) {
 }
 
 # Plots candidates polling results over a given time by week
-plot_rcp_ggplot <- function(df, main_folder = "", plot_name = "", n_colors = 6, 
-                           set = "RdBu") {
+plot_rcp_ggplot <- function(df, main_folder = "", plot_name = "", plot_type = "smooth",
+                            n_colors = 6, set = "RdBu") {
   
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
   
   # Standard plot for given polls
-  ggplot(df, aes(x = End, y = avg, color = Candidate)) + 
-    geom_smooth(aes(group = Candidate), method = "loess") +
+  p <- ggplot(df, aes(x = End, y = avg, color = Candidate)) + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_color_manual(values = full_pal(n_colors)) +
     scale_x_date() +
     labs(x = "Month", y = "Average Percent Support")
   
+  # Sets type of plot to generate: smooth, line or both.
+  if (plot_type == "smooth") {
+    p <- p + geom_smooth(aes(group = Candidate), method = "loess")
+  }
+  else if (plot_type == "line") {
+    p <- p + geom_line(aes(group = Candidate)) + geom_point()
+  } else if (plot_type == "both") {
+    p <- p + geom_smooth(aes(group = Candidate), method = "loess") +
+      geom_line(aes(group = Candidate))
+  } else {
+    stop("Incorrect plot type given: use smooth, line, or both")
+  }
+  
   # Saves to "www" folder as png image if folder and plot name given
   if ((plot_name != "") && (main_folder != "")) {
     ggsave(file = file.path(main_folder, "www", plot_name))
   }
+  
+  # Explicitly returns plot
+  return(p)
 }
 
 # Creates plots for a given funding table. Wrapper for plot_funding_ggplot
@@ -187,21 +202,35 @@ plot_funding <- function(main_folder, data_folder) {
   full_plot <- plot_funding_ggplot(format_funding(full), main_folder, "full_funding.png")
 }
 
-# Plots candidates funding totals
-plot_funding_ggplot <- function(df, main_folder = "", plot_name = "") {
+# Plots candidates funding totals. If type is set to default, sums all values into
+# a single number per candidate. Else, only displays given type of funding
+plot_funding_ggplot <- function(df, main_folder = "", plot_name = "", type = "All",
+                                xlab = "", ylab = "") {
+  
+  # Sets type of funding to display. "All" sums all values and "other" cuts 
+  # non-campaign and super pac funds
+  if (type == "Other") {
+    df <- df[df$Type != "Campaign",]
+    df <- df[df$Type != "Super PAC",]
+  }
+  else if (type != "All") {
+    df <- df[df$Type == type,]
+  }
+  
+  # Standard bar plot, summing all values for a given type of funding per candidate
   p <- ggplot(df, aes(x=reorder(Candidate, Total, function(x) -1*(sum(x))), y=Total)) + 
     geom_bar(stat = "identity") + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
           axis.text.y = element_text(size = 15)) + 
     scale_y_continuous(labels = dollar) + 
-    labs(x = "", y = "") 
+    labs(x = "", y = ylab) 
   
   # Saves to "www" folder as png image if folder and plot name given
   if ((plot_name != "") && (main_folder != "")) {
     ggsave(file = file.path(main_folder, "www", plot_name))
   }
   
-  # Explicitly return plot
+  # Explicitly returns plot
   return(p)
 }
 
@@ -277,6 +306,4 @@ track <- function(main_folder) {
 # track(main_folder)
 
 # Misc. code:
-# dem <- read.csv(file.path(main_folder, "rcp_dem_full.csv"), sep = "\t")
-# gop <- read.csv(file.path(main_folder, "rcp_gop_full.csv"), sep = "\t")
 # file.info(file.path(main_folder, "rcp_dem_full.csv"))$mtime

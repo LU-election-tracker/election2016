@@ -1,3 +1,4 @@
+library(shinythemes)
 
 ######
 ### GLOBAL VARIABLES
@@ -8,7 +9,7 @@ gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz",
                     "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
                     "Pataki", "Jindal", "Graham", "Walker")
 plot_types <- c("Smooth" = "smooth", "Line" = "line", "Both" = "both")
-funding_types <- c("Campaign" = "campaign", "Super PAC" = "super_pac", 
+funding_types <- c("All" = "all", "Campaign" = "campaign", "Super PAC" = "super_pac", 
                    "Other" = "other")
 funding_groups <- c("All" = "all", "Democrats" = "dem", "Republicans" = "gop")
 
@@ -16,7 +17,7 @@ funding_groups <- c("All" = "all", "Democrats" = "dem", "Republicans" = "gop")
 ### SITE UI
 ######
 
-shinyUI(navbarPage("LU Election Tracker 2016",
+shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("flatly"),
     
   tabPanel("Democrats",
            sidebarLayout(

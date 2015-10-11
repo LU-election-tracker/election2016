@@ -25,13 +25,11 @@ data_folder <- file.path(main_folder, "data")
 dem <- read.csv(file.path(data_folder, "rcp_dem_full.tsv"), sep = "\t")
 dem <- format_polls(dem, dem_candidates)
 dem_original <- dem
-dem_pal <- colorRampPalette(brewer.pal(9, "RdBu"))
 
 # Variables for plotting republicans with ggplot
 gop <- read.csv(file.path(data_folder, "rcp_gop_full.tsv"), sep = "\t")
 gop <- format_polls(gop, gop_candidates)
 gop_original <- gop
-gop_pal <- colorRampPalette(brewer.pal(9, "Set1"))
 
 # Variables for plotting poll info with ggplot
 dem_funding <-   format_funding(
@@ -40,6 +38,7 @@ gop_funding <-   format_funding(
   read.csv(file.path(data_folder, "os_gop.tsv"), sep = "\t"))
 full_funding <-  format_funding(
   read.csv(file.path(data_folder, "os_full.tsv"), sep = "\t"))
+
 
 ######
 ### SERVER
@@ -59,30 +58,11 @@ shinyServer(function(input, output) {
     
     # Plots using ggplot depending on type of plot
     if (input$dem_plot_type == "smooth") {
-      ggplot(dem, aes(x = End, y = avg, color = Candidate)) + 
-        geom_smooth(aes(group = Candidate), method = "loess") +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = dem_pal(6)) +
-        scale_x_date() +
-        labs(x = "Month", y = "Average Percent Support")
-      
+      plot_rcp_ggplot(dem, plot_type = "smooth", n_colors = 6, set = "RdBu")
     } else if (input$dem_plot_type == "line") {
-      ggplot(dem, aes(x = End, y = avg, color = Candidate)) + 
-        geom_line(aes(group = Candidate)) +
-        geom_point() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = dem_pal(6)) +
-        scale_x_date() +
-        labs(x = "Month", y = "Average Percent Support")
-      
+      plot_rcp_ggplot(dem, plot_type = "line", n_colors = 6, set = "RdBu")
     } else if (input$dem_plot_type == "both") {
-      ggplot(dem, aes(x = End, y = avg, color = Candidate)) + 
-        geom_smooth(aes(group = Candidate), method = "loess") +
-        geom_line(aes(group = Candidate)) +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = dem_pal(6)) +
-        scale_x_date() +
-        labs(x = "Month", y = "Average Percent Support")
+      plot_rcp_ggplot(dem, plot_type = "both", n_colors = 6, set = "RdBu")
     }
   })
   
@@ -103,30 +83,11 @@ shinyServer(function(input, output) {
     
     # Plots poll information based on desired type of plot
     if (input$gop_plot_type == "smooth") {
-      ggplot(gop, aes(x = End, y = avg, color = Candidate)) + 
-        geom_smooth(aes(group = Candidate), method = "loess") +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = gop_pal(16)) +
-        scale_x_date() +
-        labs(x = "Month", y = "Average Percent Support")
-      
+      plot_rcp_ggplot(gop, plot_type = "smooth", n_colors = 16, set = "Set1")
     } else if (input$gop_plot_type == "line") {
-      ggplot(gop, aes(x = End, y = avg, color = Candidate)) + 
-        geom_line(aes(group = Candidate)) +
-        geom_point() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = gop_pal(16)) +
-        scale_x_date() +
-        labs(x = "Month", y = "Average Percent Support")
-      
+      plot_rcp_ggplot(gop, plot_type = "line", n_colors = 16, set = "Set1")
     } else if (input$gop_plot_type == "both") {
-      ggplot(gop, aes(x = End, y = avg, color = Candidate)) +
-        geom_smooth(aes(group = Candidate), method = "loess") +
-        geom_line(aes(group = Candidate)) +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-        scale_color_manual(values = gop_pal(16)) +
-        scale_x_date() +
-        labs(x = "Month", y = "Average Percent Support")
+      plot_rcp_ggplot(gop, plot_type = "both", n_colors = 16, set = "Set1")
     }
   })
   
@@ -139,13 +100,21 @@ shinyServer(function(input, output) {
   
   output$funding_plot <- renderPlot({
     
+    # Sets type of plot and y-axis label based on user input
+    type <- ylab <- ""
+    if (input$funding_source == "all") { type <- ylab <- "All" } 
+    else if (input$funding_source == "campaign") { type <- ylab <- "Campaign" } 
+    else if (input$funding_source == "super_pac") { type <- ylab <- "Super PAC" } 
+    else if (input$funding_source == "other") { type <- ylab <- "Other" }
+    
     # Plots using ggplot depending on desired group of candidates
+    # TODO: y-axis labels???
     if (input$funding_groups == "all") {
-      plot_funding_ggplot(full_funding)
+      plot_funding_ggplot(full_funding, type = type, ylab = "")
     } else if (input$funding_groups == "dem") {
-      plot_funding_ggplot(dem_funding)
+      plot_funding_ggplot(dem_funding, type = type, ylab = "")
     } else if (input$funding_groups == "gop") {
-      plot_funding_ggplot(gop_funding)
+      plot_funding_ggplot(gop_funding, type = type, ylab = "")
     }
   })
   
