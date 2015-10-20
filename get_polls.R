@@ -20,6 +20,13 @@ gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz",
 ### UTILITY FUNCTIONS
 ######
 
+# Removes candidates who dropped out of the race
+remove_candidates <- function(candidates, df) {
+  cn <- colnames(df)
+  candidates <- candidates[candidates %in% cn]
+  return(candidates)
+}
+
 # Formats given RCP poll and melts it by end date for given list of candidates.
 # Cuts off all polls before 2/26/15
 format_polls <- function(df, candidates, ids = c("End", "Poll")) {
@@ -154,7 +161,7 @@ plot_rcp <- function(main_folder, data_folder) {
 
 # Plots candidates polling results over a given time by week
 plot_rcp_ggplot <- function(df, main_folder = "", plot_name = "", plot_type = "smooth",
-                            n_colors = 6, set = "RdBu") {
+                            n_colors = 6, set = "RdBu", xlim = NULL, ylim = NULL) {
   
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
@@ -174,7 +181,8 @@ plot_rcp_ggplot <- function(df, main_folder = "", plot_name = "", plot_type = "s
     p <- p + geom_line(aes(group = Candidate)) + geom_point()
   } else if (plot_type == "both") {
     p <- p + geom_smooth(aes(group = Candidate), method = "loess") +
-      geom_line(aes(group = Candidate))
+      #geom_line(aes(group = Candidate))
+      geom_point(aes(shape = Candidate))
   } else {
     stop("Incorrect plot type given: use smooth, line, or both")
   }
