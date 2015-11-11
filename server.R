@@ -8,6 +8,14 @@ library(ggplot2)
 library(Cairo)
 library(scales)
 
+
+###### Mosaic plots in productplots for proportional funding
+###### OR vcd package
+###### OR parallel coordinates plot
+
+###### Also look into population pyramids
+
+
 ######
 ### VARIABLES, UTILITY FUNCTIONS AND CALLS
 ######
@@ -20,17 +28,27 @@ source(tracking)
 main_folder <- "./"
 data_folder <- file.path(main_folder, "data")
 
-# Variables for plotting democrats with ggplot
-dem <- read.csv(file.path(data_folder, "rcp_dem_full.tsv"), sep = "\t")
-dem <- format_polls(dem, dem_candidates)
-dem_original <- dem
+# Opens and formats RCP poll data for democrats
+dem_rcp <- read.csv(file.path(data_folder, "rcp_dem_full.tsv"), sep = "\t")
+rcp_row <- which(apply(dem_rcp, 1, function(x) any(grepl("RCP Average", x))))
+dem_rcp <- dem_rcp[-c(rcp_row),]
+dem_rcp <- format_polls(dem_rcp, dem_candidates, "6/28")
 
-# Variables for plotting republicans with ggplot
-gop <- read.csv(file.path(data_folder, "rcp_gop_full.tsv"), sep = "\t")
-gop <- format_polls(gop, gop_candidates)
-gop_original <- gop
+# Opens and formats RCP poll data for republicans
+gop_rcp <- read.csv(file.path(data_folder, "rcp_gop_full.tsv"), sep = "\t")
+rcp_row <- which(apply(gop_rcp, 1, function(x) any(grepl("RCP Average", x))))
+gop_rcp <- gop_rcp[-c(rcp_row),]
+gop_rcp <- format_polls(gop_rcp, gop_candidates, "6/28")
 
-# Variables for plotting poll info with ggplot
+# Opens and formats Pollster poll data
+dem_pollster <- read.csv(file.path(data_folder, "pollster_dem.tsv"), sep = "\t")
+gop_pollster <- read.csv(file.path(data_folder, "pollster_gop.tsv"), sep = "\t")
+colnames(dem_pollster)[1] <- "Poll"
+colnames(gop_pollster)[1] <- "Poll"
+dem_pollster <- format_polls(dem_pollster, dem_candidates, format_dates = FALSE)
+gop_pollster <- format_polls(gop_pollster, gop_candidates, format_dates = FALSE)
+
+# Variables for plotting funding info with ggplot
 dem_funding <-   format_funding(
   read.csv(file.path(data_folder, "os_dem.tsv"), sep = "\t"))
 gop_funding <-   format_funding(
@@ -38,6 +56,9 @@ gop_funding <-   format_funding(
 full_funding <-  format_funding(
   read.csv(file.path(data_folder, "os_full.tsv"), sep = "\t"))
 
+# Sets default plot data to pollster
+dem <- dem_pollster
+gop <- gop_pollster
 
 ######
 ### SERVER
@@ -50,14 +71,20 @@ shinyServer(
   function(input, output) {
       
     # Code here is run each time user visits app
-    plot_rcp_ggplot(dem_original, plot_type = "smooth", n_colors = 6, set = "RdBu")
-    plot_rcp_ggplot(gop_original, plot_type = "smooth", n_colors = 6, set = "RdBu")
     
     ### Democrat plotting functions
     
     # Updates input for democrat plot and chooses plotting function
     dem_input <- reactive({
       
+      # Sets data source
+      if (input$dem_plot_data == "rcp") {
+        dem <- dem_rcp
+      } else if (input$dem_plot_data == "pollster") {
+        dem <- dem_pollster
+      }
+      
+      # Updates candidate list
       # TODO - update candidates faster
       candidates <- setdiff(dem_candidates, updated_dem())
       for (c in candidates) {
@@ -67,11 +94,11 @@ shinyServer(
       # Plots using ggplot depending on type of plot
       p <- NULL
       if (input$dem_plot_type == "smooth") {
-        p <- plot_rcp_ggplot(dem, plot_type = "smooth", n_colors = 6, set = "RdBu")
+        p <- plot_polls_ggplot(dem, plot_type = "smooth", n_colors = 6, set = "RdBu")
       } else if (input$dem_plot_type == "line") {
-        p <- plot_rcp_ggplot(dem, plot_type = "line", n_colors = 6, set = "RdBu")
+        p <- plot_polls_ggplot(dem, plot_type = "line", n_colors = 6, set = "RdBu")
       } else if (input$dem_plot_type == "both") {
-        p <- plot_rcp_ggplot(dem, plot_type = "both", n_colors = 6, set = "RdBu")
+        p <- plot_polls_ggplot(dem, plot_type = "both", n_colors = 6, set = "RdBu")
       }
       return(p)
     })
@@ -101,6 +128,14 @@ shinyServer(
     # Updates input for democrat plot and chooses plotting function
     gop_input <- reactive({
       
+      # Sets data source
+      if (input$gop_plot_data == "rcp") {
+        gop <- gop_rcp
+      } else if (input$gop_plot_data == "pollster") {
+        gop <- gop_pollster
+      }
+      
+      # Updates candidate list
       # TODO - update candidates faster
       candidates <- setdiff(gop_candidates, updated_gop())
       for (c in candidates) {
@@ -110,11 +145,11 @@ shinyServer(
       # Plots poll information based on desired type of plot
       p <- NULL
       if (input$gop_plot_type == "smooth") {
-        p <- plot_rcp_ggplot(gop, plot_type = "smooth", n_colors = 16, set = "Set1")
+        p <- plot_polls_ggplot(gop, plot_type = "smooth", n_colors = 16, set = "Set1")
       } else if (input$gop_plot_type == "line") {
-        p <- plot_rcp_ggplot(gop, plot_type = "line", n_colors = 16, set = "Set1")
+        p <- plot_polls_ggplot(gop, plot_type = "line", n_colors = 16, set = "Set1")
       } else if (input$gop_plot_type == "both") {
-        p <- plot_rcp_ggplot(gop, plot_type = "both", n_colors = 16, set = "Set1")
+        p <- plot_polls_ggplot(gop, plot_type = "both", n_colors = 16, set = "Set1")
       }
       return(p)
     })

@@ -27,40 +27,9 @@ remove_candidates <- function(candidates, df) {
   return(candidates)
 }
 
-# Appends years to a col in a dataframe. Assumes date column named "End." Returns data frame. 
-# Assumes values exist for January and the df goes backwards in years.
-format_date_col <- function(df, format = "%m/%d") {
-  
-  # Converts col to date
-  df$End <- as.Date(df$End, format = format)
-  
-  # Iterates through each value in column, going backwards a year
-  # for next month after last value in January. Uses lubridate
-  current_year = 0
-  current_date <- previous_month <- current_month <- NULL
-  for(i in 1:length(df$End)) {
-    current_date <- df$End[i]
-    current_month <- month(as.Date(current_date, format))
-    if (is.null(previous_month)) {
-      previous_month = current_month
-    }
-    if (previous_month == 1) {
-      if(current_month != 1) {
-        current_year = current_year - 1
-      }
-    }
-    df$End[i] <- current_date + years(current_year)
-    previous_month <- current_month
-  }
-  
-  # Explicitly returns df
-  return(df)
-}
-
 # Formats given RCP poll and melts it by end date for given list of candidates.
 # Cuts off all polls before 2/26/15
-format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
-                         format_dates = TRUE) {
+format_polls <- function(df, candidates, ids = c("End", "Poll")) {
   
   # Removes candidates from table if no longer in race
   column_names <- colnames(df)
@@ -70,19 +39,20 @@ format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
     }
   }
   
-  # Removes all polls before given cutoff
-  if (!is.null(cutoff)) {
-    last_row <- which(apply(df, 1, function(x) any(grepl(cutoff, x))))
-    df <- df[1:last_row,]
-  }
+  # Removes RCP average
+  rcp_row <- which(apply(df, 1, function(x) any(grepl("RCP Average", x))))
+  df <- df[-c(rcp_row),]
   
-  # Converts end column to dates with the correct year
-  # WARNING: this method is slow, so use only when necessary
-  df <- format_date_col(df)
-    
+  # Removes all polls before Qunnipiac poll on 2/26/15
+  last_row <- which(apply(df, 1, function(x) any(grepl("2/26", x))))
+  df <- df[1:last_row,]
+  
+  # Converts end column to dates
+  df$End <- as.Date(df$End, format="%m/%d")
+  
   # Melts data frame
   df <- melt(df, id.vars = ids, measure.vars = candidates, 
-                      variable.name = "Candidate")
+             variable.name = "Candidate")
   df %>% group_by(End, Candidate) %>% summarise(avg = mean(as.numeric(value)))
 }
 
@@ -139,29 +109,8 @@ scrape_rcp <- function(rcp_address, recent_out, full_out, sample = TRUE) {
   write.table(full, full_out, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
-# Scrapes a given Pollster page and writes updated csv poll files.
-# Note that the dates column is named "Dates" here instead of RCP's "Date"
-scrape_pollster <- function(pollster_address, out_file) {
-  
-  # Reads poll table as a data frame
-  pollster <- html(pollster_address)
-  out <- pollster %>% html_node("#poll-table") %>% html_table()
-  
-  # Splits date col into start and end date
-  out <- separate(data = out, col = Dates, into = c("Start", "End"), sep = " - ")
-  
-  # Remove all types of whitespace and "NEW!" from data frame
-  # TODO: Makes this more efficient
-  out <- data.frame(apply(out, 2, function(x) gsub("\n", "", x, fixed = TRUE)))
-  out <- data.frame(apply(out, 2, function(x) gsub(" ", "", x, fixed = TRUE)))
-  out <- data.frame(apply(out, 2, function(x) gsub("NEW!", "", x, fixed = TRUE)))
-  
-  # Writes tables out as a csv, separated by tabs
-  write.table(out, out_file, sep = "\t", quote = FALSE, row.names = FALSE)
-}
-
 # Scrapes the Open Secrets website for funding information
-scrape_funding <- function(full_out, dem_out, gop_out) {
+scrape_funding <- function(address, full_out, dem_out, gop_out) {
   
   # Readings funding data as a data frame
   opensecrets <- html("https://www.opensecrets.org/pres16/outsidegroups.php")
@@ -180,12 +129,20 @@ scrape_funding <- function(full_out, dem_out, gop_out) {
 # Updates Open Secrets funding information, outputting to the given folder
 update_funding <- function(data_folder) {
   scrape_funding(file.path(data_folder, "os_full.tsv"), 
-             file.path(data_folder, "os_dem.tsv"),
-             file.path(data_folder, "os_gop.tsv"))
+                 file.path(data_folder, "os_dem.tsv"),
+                 file.path(data_folder, "os_gop.tsv"))
 }
 
+# Saves polling information from a given site
+update_polling <- function(parties, polling_addresses, data_folder) {
+	for (address in polling_addresses) {
+		scrape_polling(address, data_folder)
+	}
+}
+
+
 # Updates Real Clear Politics poll csv files, outputting to the given folder
-update_rcp <- function(data_folder) {
+update_rcp <- function(addresses, data_folder) {
   dem_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_democratic_presidential_nomination-3824.html"
   gop_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_republican_presidential_nomination-3823.html"
   scrape_rcp(dem_address, 
@@ -197,56 +154,22 @@ update_rcp <- function(data_folder) {
              sample = FALSE)
 }
 
-# Updates Pollster poll csv files, outputting to the given folder
-update_pollster <- function(data_folder) {
-  dem_address <- "http://elections.huffingtonpost.com/pollster/2016-national-democratic-primary"
-  gop_address <- "http://elections.huffingtonpost.com/pollster/2016-national-gop-primary"
-  scrape_pollster(dem_address,
-                  file.path(data_folder, "pollster_dem.tsv"))
-  scrape_pollster(gop_address,
-                  file.path(data_folder, "pollster_gop.tsv")) 
-}
-
-# Creates plots for a given rcp table. Wrapper for plot_polls_gplot
+# Creates plots for a given rcp table. Wrapper for plot_rcp_gplot
 plot_rcp <- function(main_folder, data_folder) {
   
   # Opens poll summary files into data frames
   dem <- read.csv(file.path(data_folder, "rcp_dem_full.tsv"), sep = "\t")
   gop <- read.csv(file.path(data_folder, "rcp_gop_full.tsv"), sep = "\t")
   
-  # Removes RCP average from both data frames
-  rcp_row <- which(apply(dem, 1, function(x) any(grepl("RCP Average", x))))
-  dem <- dem[-c(rcp_row),]
-  rcp_row <- which(apply(gop, 1, function(x) any(grepl("RCP Average", x))))
-  gop <- gop[-c(rcp_row),]
-  
   # Formats data frames and plots party averages over time
-  # Removes all polls before CNN poll on 6/28/15
-  dem_plot <- plot_polls_ggplot(format_polls(dem, dem_candidates, "6/28"), main_folder, "rcp_dem.png")
-  gop_plot <- plot_polls_ggplot(format_polls(gop, gop_candidates, "6/28"), main_folder, "rcp_gop.png", 
-                             n_colors = 16, set = "Set1")
-}
-
-# Creates plots for a given pollster table. Wrapper for plot_pollster_gplot
-plot_pollster <- function(main_folder, data_folder) {
-  
-  # Opens poll summary files into data frames
-  dem <- read.csv(file.path(data_folder, "pollster_dem.tsv"), sep = "\t")
-  gop <- read.csv(file.path(data_folder, "pollster_gop.tsv"), sep = "\t")
-  
-  # Changes first column name to "Poll" in order to match RCP format
-  colnames(dem)[1] <- "Poll"
-  colnames(gop)[1] <- "Poll"
-  
-  # Formats data frames and plots party averages over time
-  dem_plot <- plot_polls_ggplot(format_polls(dem, dem_candidates), main_folder, "pollster_dem.png")
-  gop_plot <- plot_polls_ggplot(format_polls(gop, gop_candidates), main_folder, "pollster_gop.png", 
+  dem_plot <- plot_rcp_ggplot(format_polls(dem, dem_candidates), main_folder, "dem.png")
+  gop_plot <- plot_rcp_ggplot(format_polls(gop, gop_candidates), main_folder, "gop.png", 
                               n_colors = 16, set = "Set1")
 }
 
 # Plots candidates polling results over a given time by week
-plot_polls_ggplot <- function(df, main_folder = "", plot_name = "", plot_type = "smooth",
-                              n_colors = 6, set = "RdBu", xlim = NULL, ylim = NULL) {
+plot_rcp_ggplot <- function(df, main_folder = "", plot_name = "", plot_type = "smooth",
+                            n_colors = 6, set = "RdBu", xlim = NULL, ylim = NULL) {
   
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
@@ -331,18 +254,13 @@ plot_funding_ggplot <- function(df, main_folder = "", plot_name = "", type = "Al
 archive <- function(main_folder, data_folder, shiny_folder, archive_folder) {
   
   # Gets all current files
-  rcp_dem_plot <-   "rcp_dem.png"
+  rcp_dem_plot <-   "dem.png"
   rcp_dem_recent <- "rcp_dem_recent.tsv"
   rcp_dem_full <-   "rcp_dem_full.tsv"
   
-  rcp_gop_plot <-   "rcp_gop.png"
+  rcp_gop_plot <-   "gop.png"
   rcp_gop_recent <- "rcp_gop_recent.tsv"
   rcp_gop_full <-   "rcp_gop_full.tsv"
-  
-  pollster_dem_plot <-  "pollster_dem.png"
-  pollster_gop_plot <-  "pollster_gop.png"
-  pollster_dem <-       "pollster_dem.tsv"
-  pollster_gop <-       "pollster_gop.tsv"
   
   os_dem <-   "os_dem.tsv"
   os_gop <-   "os_gop.tsv"
@@ -365,11 +283,6 @@ archive <- function(main_folder, data_folder, shiny_folder, archive_folder) {
   file.copy(file.path(data_folder, rcp_gop_recent), file.path(archive, rcp_gop_recent), overwrite = TRUE)
   file.copy(file.path(data_folder, rcp_gop_full), file.path(archive, rcp_gop_full), overwrite = TRUE)
   
-  file.copy(file.path(shiny_folder, pollster_dem_plot), file.path(archive, pollster_dem_plot), overwrite = TRUE)
-  file.copy(file.path(data_folder, pollster_gop_plot), file.path(archive, pollster_gop_plot), overwrite = TRUE)
-  file.copy(file.path(data_folder, pollster_dem), file.path(archive, pollster_dem), overwrite = TRUE)
-  file.copy(file.path(data_folder, pollster_gop), file.path(archive, pollster_gop), overwrite = TRUE)
-  
   file.copy(file.path(data_folder, os_dem), file.path(archive, os_dem), overwrite = TRUE)
   file.copy(file.path(data_folder, os_gop), file.path(archive, os_gop), overwrite = TRUE)
   file.copy(file.path(data_folder, os_full), file.path(archive, os_full), overwrite = TRUE)
@@ -380,26 +293,49 @@ archive <- function(main_folder, data_folder, shiny_folder, archive_folder) {
 }
 
 
-# Main update function. Updates polling data and graphs.
-track <- function(main_folder) {
+ 
+# Main filter algorithm. Parameters are as follows 
+# INPUT			party:						name of party to track
+#						candidates:				names of candidates to track
+#						start_date_name:	name of column containing start date of polls
+#						end_date_name:		name of column containing end date of polls	
+# 					poll_tables:			data frames containing poll information
+# 					main_folder:			main output folder for project (defaults to cwd)
+# OPTIONAL
+track_polling <- function(party, candidates, start_date_name = NULL, end_date_name = NULL,
+													poll_table = NULL, main_folder = getwd()) {
   
-  # Creates folder to hold poll data and folder to hold shiny data
+	# Checks args
+	if ((party == NULL)) {
+		stop("Must input name of party to track")
+	}
+	if ((poll_tables == NULL)) {
+		stop("Must input data frames with polling information")
+	}
+	if ((candidates == NULL) || (is.vector(candidates) == FALSE)) {
+		stop("Must input candidates in a list or vector")
+	}
+	if ((start_date_name == FALSE) && (end_date_name == FALSE)) {
+		stop("Must input either/both names of columns/rows in data containing start/end dates of polls")
+	}
+	
+  # Creates relevant directories
   data_folder <- file.path(main_folder, "data")
-  shiny_folder <- file.path(main_folder, "www")
   archive_folder <- file.path(data_folder, "archive")
   if(dir.exists(main_folder) == FALSE) { dir.create(main_folder) }
   if(dir.exists(data_folder) == FALSE) { dir.create(data_folder) }
-  if(dir.exists(shiny_folder) == FALSE) { dir.create(shiny_folder) }
   if(dir.exists(archive_folder) == FALSE) { dir.create(archive_folder) }
   
-  # Updates all polls and funding
-  update_rcp(data_folder)
-  update_pollster(data_folder)
-  update_funding(data_folder)
+  # Creates poll tables
+	update_polling(poll_table, data_folder)
+	
+	# Creates funding tables
+	for (f_table in funding_tables) {
+		update_funding(f_table, data_folder)
+	}
   
   # Creates and saves plots for polls and funding
   plot_rcp(main_folder, data_folder)
-  plot_pollster(main_folder, data_folder)
   plot_funding(main_folder, data_folder)
   
   # Archives data by current date
@@ -409,6 +345,3 @@ track <- function(main_folder) {
 # Sample usage:
 # main_folder <- file.path("C:", "Users", "Navi", "Dropbox", "Public", "Junior Year", "R", "election2016", "data")
 # track(main_folder)
-
-# Misc. code:
-# file.info(file.path(main_folder, "rcp_dem_full.csv"))$mtime
