@@ -86,6 +86,7 @@ shinyServer(
       
       # Updates candidate list
       # TODO - update candidates faster
+      # Can you use subset/filter with the entire vector of candidates that you have?
       candidates <- setdiff(dem_candidates, updated_dem())
       for (c in candidates) {
         dem <- subset(dem, Candidate != c)

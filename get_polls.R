@@ -40,7 +40,7 @@ format_date_col <- function(df, format = "%m/%d") {
   current_date <- previous_month <- current_month <- NULL
   for(i in 1:length(df$End)) {
     current_date <- df$End[i]
-    current_month <- month(as.Date(current_date, format))
+    current_month <- month(as.Date(current_date, format)) # as.Date not needed?
     if (is.null(previous_month)) {
       previous_month = current_month
     }
@@ -59,10 +59,12 @@ format_date_col <- function(df, format = "%m/%d") {
 
 # Formats given RCP poll and melts it by end date for given list of candidates.
 # Cuts off all polls before 2/26/15
+# Is this specific to RCP?
 format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
                          format_dates = TRUE) {
   
   # Removes candidates from table if no longer in race
+  # Look into using select or subset to make this one line?
   column_names <- colnames(df)
   for (can in candidates) {
     if (is.element(can, column_names) == FALSE) {
@@ -71,6 +73,7 @@ format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
   }
   
   # Removes all polls before given cutoff
+  # What about dates between poll dates?
   if (!is.null(cutoff)) {
     last_row <- which(apply(df, 1, function(x) any(grepl(cutoff, x))))
     df <- df[1:last_row,]
@@ -90,7 +93,7 @@ format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
 format_funding <- function(df, na.rm = TRUE) {
   
   # Drops organization column
-  df <- df[c("Candidate", "Type", "Total.Raised")]
+  df <- df[, c("Candidate", "Type", "Total.Raised")] # added comma?
   
   # Renames funding column to 'Raised'
   names(df)[names(df) == 'Total.Raised'] <- 'Raised'
@@ -151,7 +154,6 @@ scrape_pollster <- function(pollster_address, out_file) {
   out <- separate(data = out, col = Dates, into = c("Start", "End"), sep = " - ")
   
   # Remove all types of whitespace and "NEW!" from data frame
-  # TODO: Makes this more efficient
   out <- data.frame(apply(out, 2, function(x) gsub("\n", "", x, fixed = TRUE)))
   out <- data.frame(apply(out, 2, function(x) gsub(" ", "", x, fixed = TRUE)))
   out <- data.frame(apply(out, 2, function(x) gsub("NEW!", "", x, fixed = TRUE)))
@@ -161,7 +163,7 @@ scrape_pollster <- function(pollster_address, out_file) {
 }
 
 # Scrapes the Open Secrets website for funding information
-scrape_funding <- function(full_out, dem_out, gop_out) {
+scrape_funding <- function(full_out, dem_out, gop_out) { # Pass in dem/gop candidate list?
   
   # Readings funding data as a data frame
   opensecrets <- html("https://www.opensecrets.org/pres16/outsidegroups.php")
@@ -209,6 +211,7 @@ update_pollster <- function(data_folder) {
 
 # Creates plots for a given rcp table. Wrapper for plot_polls_gplot
 plot_rcp <- function(main_folder, data_folder) {
+  # Remove duplicate candidate names?
   
   # Opens poll summary files into data frames
   dem <- read.csv(file.path(data_folder, "rcp_dem_full.tsv"), sep = "\t")
@@ -222,6 +225,7 @@ plot_rcp <- function(main_folder, data_folder) {
   
   # Formats data frames and plots party averages over time
   # Removes all polls before CNN poll on 6/28/15
+  # Add some controls for tuning graphics? (dpi, size, etc.)
   dem_plot <- plot_polls_ggplot(format_polls(dem, dem_candidates, "6/28"), main_folder, "rcp_dem.png")
   gop_plot <- plot_polls_ggplot(format_polls(gop, gop_candidates, "6/28"), main_folder, "rcp_gop.png", 
                              n_colors = 16, set = "Set1")
