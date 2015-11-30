@@ -1,3 +1,13 @@
+# Scrapes poll data from Real Clear Politics and Pollster, outputting to an
+# archive folder as tsv files and as ggplot pngs. Functions should be called
+# all at once using track([folder_name]).
+#
+# Written by Henry Ward and Adam Loy, 2015.
+#
+# Sample usage:
+# folder <- file.path("C:", "Users", "Henry", "Documents", "election2016", "data")
+# track(folder)
+
 library(rvest)
 library(tidyr)
 library(lubridate)
@@ -40,7 +50,7 @@ format_date_col <- function(df, format = "%m/%d") {
   current_date <- previous_month <- current_month <- NULL
   for(i in 1:length(df$End)) {
     current_date <- df$End[i]
-    current_month <- month(as.Date(current_date, format)) # as.Date not needed?
+    current_month <- month(current_date)
     if (is.null(previous_month)) {
       previous_month = current_month
     }
@@ -57,9 +67,8 @@ format_date_col <- function(df, format = "%m/%d") {
   return(df)
 }
 
-# Formats given RCP poll and melts it by end date for given list of candidates.
-# Cuts off all polls before 2/26/15
-# Is this specific to RCP?
+# Formats given poll and melts it by end date for given list of candidates.
+# Cuts off all polls before a given date. Works for RCP and Pollster.
 format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
                          format_dates = TRUE) {
   
@@ -80,7 +89,7 @@ format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
   }
   
   # Converts end column to dates with the correct year
-  # WARNING: this method is slow, so use only when necessary
+  # WARNING: this method is slow
   df <- format_date_col(df)
     
   # Melts data frame
@@ -93,7 +102,7 @@ format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
 format_funding <- function(df, na.rm = TRUE) {
   
   # Drops organization column
-  df <- df[, c("Candidate", "Type", "Total.Raised")] # added comma?
+  df <- df[, c("Candidate", "Type", "Total.Raised")]
   
   # Renames funding column to 'Raised'
   names(df)[names(df) == 'Total.Raised'] <- 'Raised'
@@ -249,8 +258,9 @@ plot_pollster <- function(main_folder, data_folder) {
 }
 
 # Plots candidates polling results over a given time by week
-plot_polls_ggplot <- function(df, main_folder = "", plot_name = "", plot_type = "smooth",
-                              n_colors = 6, set = "RdBu", xlim = NULL, ylim = NULL) {
+plot_polls_ggplot <- function(df, output_folder = "", plot_name = "", plot_type = "smooth",
+                              n_colors = 6, set = "RdBu", xlim = NULL, ylim = NULL,
+                              dpi = 300) {
   
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
@@ -270,19 +280,41 @@ plot_polls_ggplot <- function(df, main_folder = "", plot_name = "", plot_type = 
     p <- p + geom_line(aes(group = Candidate)) + geom_point()
   } else if (plot_type == "both") {
     p <- p + geom_smooth(aes(group = Candidate), method = "loess") +
-      #geom_line(aes(group = Candidate))
       geom_point(aes(shape = Candidate))
   } else {
     stop("Incorrect plot type given: use smooth, line, or both")
   }
   
   # Saves to "www" folder as png image if folder and plot name given
-  if ((plot_name != "") && (main_folder != "")) {
-    ggsave(file = file.path(main_folder, "www", plot_name))
+  if ((plot_name != "") && (output_folder != "")) {
+    ggsave(file = file.path(output_folder, "www", plot_name, dpi = dpi))
   }
   
   # Explicitly returns plot
   return(p)
+}
+
+# Creates a new graphics device for saving a ggplot plot as an image.
+# Options for image type (png, jpg and tif) and resolution.
+choose_device <- function(image_type, res) {
+  # Selects image type based on user input. Defaults to png
+  device <- NULL
+  if (image_type == ".png") {
+    device <- function(..., width, height) 
+      grDevices::png(..., width = width, height = height, res = res, units = "in")
+  } else if (image_type == ".jpg") {
+    device <- function(..., width, height) 
+      grDevices::jpeg(..., width = width, height = height, res = res, units = "in")
+  } else if (image_type == ".tif") {
+    device <- function(..., width, height) 
+      grDevices::tiff(..., width = width, height = height, res = res, units = "in")
+  }  else {
+    device <- function(..., width, height) 
+      grDevices::png(..., width = width, height = height, res = res, units = "in")
+  }
+  
+  # Explicitly returns device
+  return(device)
 }
 
 # Creates plots for a given funding table. Wrapper for plot_funding_ggplot
@@ -370,7 +402,7 @@ archive <- function(main_folder, data_folder, shiny_folder, archive_folder) {
   file.copy(file.path(data_folder, rcp_gop_full), file.path(archive, rcp_gop_full), overwrite = TRUE)
   
   file.copy(file.path(shiny_folder, pollster_dem_plot), file.path(archive, pollster_dem_plot), overwrite = TRUE)
-  file.copy(file.path(data_folder, pollster_gop_plot), file.path(archive, pollster_gop_plot), overwrite = TRUE)
+  file.copy(file.path(shiny_folder, pollster_gop_plot), file.path(archive, pollster_gop_plot), overwrite = TRUE)
   file.copy(file.path(data_folder, pollster_dem), file.path(archive, pollster_dem), overwrite = TRUE)
   file.copy(file.path(data_folder, pollster_gop), file.path(archive, pollster_gop), overwrite = TRUE)
   
@@ -409,10 +441,3 @@ track <- function(main_folder) {
   # Archives data by current date
   invisible(archive(main_folder, data_folder, shiny_folder, archive_folder))
 }
-
-# Sample usage:
-# main_folder <- file.path("C:", "Users", "Navi", "Dropbox", "Public", "Junior Year", "R", "election2016", "data")
-# track(main_folder)
-
-# Misc. code:
-# file.info(file.path(main_folder, "rcp_dem_full.csv"))$mtime

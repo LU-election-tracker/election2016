@@ -12,6 +12,9 @@ source(tracking)
 main_folder <- "./"
 data_folder <- file.path(main_folder, "data")
 
+# Updates once when the server is started
+# track(main_folder)
+
 # List of all democratic and gop candidates
 dem_candidates <- c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
 gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz", 
@@ -25,11 +28,14 @@ dem_candidates <- remove_candidates(dem_candidates, dem)
 gop_candidates <- remove_candidates(gop_candidates, gop)
 
 # Sets reactive plotting types and values
-plot_types <- c("Smooth" = "smooth", "Line" = "line", "Both" = "both")
+plot_types <- c("Smooth" = "smooth", "Line" = "line", "Smooth + Points" = "both")
 plot_data <- c("Pollster" = "pollster", "Real Clear Politics" = "rcp")
 funding_types <- c("All" = "all", "Campaign" = "campaign", "Super PAC" = "super_pac", 
                    "Other" = "other")
 funding_groups <- c("All" = "all", "Democrats" = "dem", "Republicans" = "gop")
+
+# Plot saving options
+image_types <- c("png" = ".png", "jpeg" = ".jpg", "tiff" = ".tif")
 
 # HTTP addresses
 rcp_dem_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_democratic_presidential_nomination-3824.html"
@@ -49,32 +55,35 @@ lawrence_address <- "http://www.lawrence.edu/"
 shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                    
   tabPanel("Home",
-                              mainPanel(
-                                p(h3("News")),
-                                p("Site officially launched on 11/10/15!"),
-                                
-                                p(h3("Upcoming Features")),
-                                p("State-by-state map of primary results and customizable
-                                  date ranges for all plots."),
-                                
-                                p(h3("What We Do")),
-                                p("We provide a non-partisan collection
-                                  of up-to-date plots and statistical analyses charting 
-                                  the 2016 US primary and general elections."),
-                                p("As the elections progress, we will update this site 
-                                  with additional features."),
-                                p("Fork us on ",
-                                  a("Github.", href = git_address),
-                                  "Created entirely in R with ",
-                                  a("Shiny.", href = shiny_address))
-                            )
-           ),
+           
+           # Enables shinyjs package
+           shinyjs::useShinyjs(),
+           
+           mainPanel(
+            p(h3("News")),
+            p("Site officially launched on 11/10/15!"),
+            
+            p(h3("Upcoming Features")),
+            p("State-by-state map of primary results."),
+            p("Customizable date ranges for all plots."),
+            p("Poll summaries on homepage."),
+            
+            p(h3("What We Do")),
+            p("We provide a non-partisan collection
+               of up-to-date plots and statistical analyses charting 
+               the 2016 US primary and general elections."),
+            p("As the elections progress, we will update this site 
+               with additional features."),
+            p("Fork us on ",
+              a("Github.", href = git_address),
+              "Created entirely in R with ",
+              a("Shiny.", href = shiny_address))
+              )
+          ),
     
   tabPanel("Democrats",
            sidebarLayout(
              sidebarPanel(
-               actionButton("dem_update", "Update!", width = "100%"),
-               p(),
                selectInput("dem_plot_type", "Plot Type:", 
                            plot_types
                            ),
@@ -85,11 +94,20 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                             choices=dem_candidates,
                             selected=dem_candidates
                             ),
-               downloadButton('download_dem', 'Download')
+               actionButton("dem_update", "Update!", width = "100%"),
+               p(),
+               downloadButton("download_dem", "Download"),
+               checkboxInput("dem_plot_options", "See download options?", value = FALSE),
+               conditionalPanel("input.dem_plot_options == true",
+                  selectInput("dem_img_type", "Image type:", image_types),
+                  sliderInput("dem_img_dpi", "DPI:", min=100, max=1000, value=300)
                ),
+               width = 3
+             ),
              mainPanel(
                plotOutput("dem_plot", height = "450px", width = "850px"
-               )
+               ),
+               p("Press the Update button to display the graph. Last updated at midnight CST.")
                )
              )
            ),
@@ -97,8 +115,6 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
   tabPanel("Republicans",
            sidebarLayout(
              sidebarPanel(
-               actionButton("gop_update", "Update!", width = "100%"),
-               p(),
                selectInput("gop_plot_type", "Plot Type:", 
                            plot_types
                ),
@@ -109,14 +125,23 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                                   choices=gop_candidates,
                                   selected=gop_candidates
                ),
-               downloadButton('download_gop', 'Download')
+               actionButton("gop_update", "Update!", width = "100%"),
+               p(),
+               downloadButton('download_gop', 'Download'),
+               checkboxInput("gop_plot_options", "See download options?", value = FALSE),
+               conditionalPanel("input.gop_plot_options == true",
+                  selectInput("gop_img_type", "Image type:", image_types),
+                  sliderInput("gop_img_dpi", "DPI:", min=100, max=1000, value=300)
+               ),
+               width = 3
              ),
              mainPanel(
                plotOutput("gop_plot", height = "450px", width = "850px"
+               ),
+               p("Press the Update button to display the graph. Last updated at midnight CST.")
                )
              )
-           )
-  ),
+           ),
   
   tabPanel("Funding",
            sidebarLayout(
@@ -127,7 +152,13 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                selectInput("funding_groups", "Candidates:", 
                            choices=funding_groups
                ),
-               downloadButton('download_funding', 'Download')
+               downloadButton('download_funding', 'Download'),
+               checkboxInput("funding_plot_options", "See download options?", value = FALSE),
+               conditionalPanel("input.funding_plot_options == true",
+                  selectInput("funding_img_type", "Image type:", image_types),
+                  sliderInput("funding_img_dpi", "DPI:", min=100, max=1000, value=300)
+               ),
+               width = 3
              ),
              mainPanel(
                plotOutput("funding_plot", height = "450px", width = "850px"
@@ -145,7 +176,8 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                p(a("Real Clear Politics Republican Polls", href = rcp_gop_address)),
                p(a("Open Secrets Funding", href = os_address)),
                p(a("Github", href = git_address)),
-               p(a("Blog", href = loy_address))
+               p(a("Blog", href = loy_address)),
+               width = 3
              ),
              mainPanel(
                p(h3("Data")),

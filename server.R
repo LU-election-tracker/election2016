@@ -7,6 +7,7 @@ library(RColorBrewer)
 library(ggplot2)
 library(Cairo)
 library(scales)
+library(shinyjs)
 
 
 ###### Mosaic plots in productplots for proportional funding
@@ -60,6 +61,7 @@ full_funding <-  format_funding(
 dem <- dem_pollster
 gop <- gop_pollster
 
+
 ######
 ### SERVER
 ######
@@ -109,12 +111,28 @@ shinyServer(
       print(dem_input())
     })
     
+    # Disables download and file options initially
+    disable("download_dem")
+    disable("dem_plot_options")
+    
+    # Enables download and file options if there is a plot
+    observe({
+      if (input$dem_update > 0) {
+        enable("download_dem")
+        enable("dem_plot_options")
+      }
+    })
+    
     # Download handler for democrat plot download
     output$download_dem <- downloadHandler(
-      filename = function() { paste("dem_polls", '.png', sep='') },
+      filename = function() {
+        paste("dem_polls", input$dem_img_type, sep='') 
+      },
       content = function(file) {
-        device <- function(..., width, height) 
-          grDevices::png(..., width = width, height = height, res = 300, units = "in")
+        # Creates a new graphics device based on user input for image type and resolution
+        device <- choose_device(input$dem_img_type, res = input$dem_img_dpi)
+        
+        # Saves plot to a file using ggsave
         ggsave(file, plot = dem_input(), device = device)
       }
     )
@@ -160,12 +178,28 @@ shinyServer(
       print(gop_input())
     })
     
+    # Disables download and file options initially
+    disable("download_gop")
+    disable("gop_plot_options")
+    
+    # Enables download and file options if there is a plot
+    observe({
+      if (input$gop_update > 0) {
+        enable("download_gop")
+        enable("gop_plot_options")
+      }
+    })
+    
     # Download handler for republican plot download
     output$download_gop <- downloadHandler(
-      filename = function() { paste("gop_polls", '.png', sep='') },
+      filename = function() {
+        paste("gop_polls", input$gop_img_type, sep='') 
+      },
       content = function(file) {
-        device <- function(..., width, height) 
-          grDevices::png(..., width = width, height = height, res = 300, units = "in")
+        # Creates a new graphics device based on user input for image type and resolution
+        device <- choose_device(input$gop_img_type, res = input$gop_img_dpi)
+        
+        # Saves plot to a file using ggsave
         ggsave(file, plot = gop_input(), device = device)
       }
     )
@@ -203,13 +237,14 @@ shinyServer(
     output$funding_plot <- renderPlot({
       print(funding_input())
     })
-    
+      
     # Download handler for funding plot download
     output$download_funding <- downloadHandler(
-      filename = function() { paste("funding", '.png', sep='') },
+      filename = function() {
+        paste("funding", input$funding_img_type, sep='') 
+      },
       content = function(file) {
-        device <- function(..., width, height) 
-          grDevices::png(..., width = width, height = height, res = 300, units = "in")
+        device <- choose_device(input$funding_img_type, res = input$funding_img_dpi)
         ggsave(file, plot = funding_input(), device = device)
       }
     )
