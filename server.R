@@ -1,20 +1,8 @@
-library(rvest)
-library(tidyr)
-library(lubridate)
-library(reshape2)
-library(dplyr)
-library(RColorBrewer)
-library(ggplot2)
-library(Cairo)
-library(scales)
+
 library(shinyjs)
+library(Cairo)
 
-
-###### Mosaic plots in productplots for proportional funding
-###### OR vcd package
-###### OR parallel coordinates plot
-
-###### Also look into population pyramids
+###### Note to self: look into population pyramids
 
 
 ######
@@ -33,13 +21,13 @@ data_folder <- file.path(main_folder, "data")
 dem_rcp <- read.csv(file.path(data_folder, "rcp_dem_full.tsv"), sep = "\t")
 rcp_row <- which(apply(dem_rcp, 1, function(x) any(grepl("RCP Average", x))))
 dem_rcp <- dem_rcp[-c(rcp_row),]
-dem_rcp <- format_polls(dem_rcp, dem_candidates, "6/28")
+dem_rcp <- format_polls(dem_rcp, dem_candidates, "3/29")
 
 # Opens and formats RCP poll data for republicans
 gop_rcp <- read.csv(file.path(data_folder, "rcp_gop_full.tsv"), sep = "\t")
 rcp_row <- which(apply(gop_rcp, 1, function(x) any(grepl("RCP Average", x))))
 gop_rcp <- gop_rcp[-c(rcp_row),]
-gop_rcp <- format_polls(gop_rcp, gop_candidates, "6/28")
+gop_rcp <- format_polls(gop_rcp, gop_candidates, "3/29")
 
 # Opens and formats Pollster poll data
 dem_pollster <- read.csv(file.path(data_folder, "pollster_dem.tsv"), sep = "\t")
@@ -56,6 +44,14 @@ gop_funding <-   format_funding(
   read.csv(file.path(data_folder, "os_gop.tsv"), sep = "\t"))
 full_funding <-  format_funding(
   read.csv(file.path(data_folder, "os_full.tsv"), sep = "\t"))
+
+# Variables for setting date range of plots
+dem_date_range_str <- NULL
+dem_start_date <- NULL
+dem_end_date <- NULL
+gop_date_range_str <- NULL
+gop_start_date <- NULL
+gop_end_date <- NULL
 
 # Sets default plot data to pollster
 dem <- dem_pollster
@@ -94,14 +90,22 @@ shinyServer(
         dem <- subset(dem, Candidate != c)
       }
       
+      # Updates date range based on user input
+      dem_date_range_str <- strsplit(as.character(input$dem_date_range), "to")
+      dem_start_date <- dem_date_range_str[[1]]
+      dem_end_date <- dem_date_range_str[[2]]
+      
       # Plots using ggplot depending on type of plot
       p <- NULL
       if (input$dem_plot_type == "smooth") {
-        p <- plot_polls_ggplot(dem, plot_type = "smooth", n_colors = 6, set = "RdBu")
+        p <- plot_polls_ggplot(dem, plot_type = "smooth", n_colors = 6, set = "RdBu",
+                               start_date = dem_start_date, end_date = dem_end_date)
       } else if (input$dem_plot_type == "line") {
-        p <- plot_polls_ggplot(dem, plot_type = "line", n_colors = 6, set = "RdBu")
+        p <- plot_polls_ggplot(dem, plot_type = "line", n_colors = 6, set = "RdBu",
+                               start_date = dem_start_date, end_date = dem_end_date)
       } else if (input$dem_plot_type == "both") {
-        p <- plot_polls_ggplot(dem, plot_type = "both", n_colors = 6, set = "RdBu")
+        p <- plot_polls_ggplot(dem, plot_type = "both", n_colors = 6, set = "RdBu",
+                               start_date = dem_start_date, end_date = dem_end_date)
       }
       return(p)
     })
@@ -161,14 +165,22 @@ shinyServer(
         gop <- subset(gop, Candidate != c)
       }
       
+      # Updates date range based on user input
+      gop_date_range_str <- strsplit(as.character(input$gop_date_range), "to")
+      gop_start_date <- gop_date_range_str[[1]]
+      gop_end_date <- gop_date_range_str[[2]]
+      
       # Plots poll information based on desired type of plot
       p <- NULL
       if (input$gop_plot_type == "smooth") {
-        p <- plot_polls_ggplot(gop, plot_type = "smooth", n_colors = 16, set = "Set1")
+        p <- plot_polls_ggplot(gop, plot_type = "smooth", n_colors = 16, set = "Set1",
+                               start_date = gop_start_date, end_date = gop_end_date)
       } else if (input$gop_plot_type == "line") {
-        p <- plot_polls_ggplot(gop, plot_type = "line", n_colors = 16, set = "Set1")
+        p <- plot_polls_ggplot(gop, plot_type = "line", n_colors = 16, set = "Set1",
+                               start_date = gop_start_date, end_date = gop_end_date)
       } else if (input$gop_plot_type == "both") {
-        p <- plot_polls_ggplot(gop, plot_type = "both", n_colors = 16, set = "Set1")
+        p <- plot_polls_ggplot(gop, plot_type = "both", n_colors = 16, set = "Set1",
+                               start_date = gop_start_date, end_date = gop_end_date)
       }
       return(p)
     })

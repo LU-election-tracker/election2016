@@ -16,6 +16,7 @@ library(dplyr)
 library(RColorBrewer)
 library(ggplot2)
 library(scales)
+library(grid)
 
 ######
 ### GLOBAL VARIABLES
@@ -89,7 +90,6 @@ format_polls <- function(df, candidates, cutoff = NULL, ids = c("End", "Poll"),
   }
   
   # Converts end column to dates with the correct year
-  # WARNING: this method is slow
   df <- format_date_col(df)
     
   # Melts data frame
@@ -260,21 +260,31 @@ plot_pollster <- function(main_folder, data_folder) {
 # Plots candidates polling results over a given time by week
 plot_polls_ggplot <- function(df, output_folder = "", plot_name = "", plot_type = "smooth",
                               n_colors = 6, set = "RdBu", xlim = NULL, ylim = NULL,
-                              dpi = 300) {
+                              start_date = NULL, end_date = NULL, dpi = 300) {
   
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
   
   # Standard plot for given polls
   p <- ggplot(df, aes(x = End, y = avg, color = Candidate)) + 
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(axis.text.x = element_text(size = 15, angle = 45, hjust = 1),
+          axis.text.y = element_text(size = 15, hjust = 1),
+          legend.key.size = unit(0.8, "cm"),
+          legend.text = element_text(size = 15),
+          legend.title = element_text(size = 15)) +
     scale_color_manual(values = full_pal(n_colors)) +
-    scale_x_date() +
-    labs(x = "Month", y = "Average Percent Support")
+    labs(x = "", y = "")
+  
+  # Sets date ranges if both specified. Will not work if just one given.
+  if (!is.null(start_date) && !is.null(end_date)) {
+    p <- p + scale_x_date(limits = c(as.Date(start_date), as.Date(end_date)))
+  } else {
+    p <- p + scale_x_date()
+  }
   
   # Sets type of plot to generate: smooth, line or both.
   if (plot_type == "smooth") {
-    p <- p + geom_smooth(aes(group = Candidate), method = "loess")
+    p <- p + geom_smooth(aes(group = Candidate), method = "loess", size = 1)
   }
   else if (plot_type == "line") {
     p <- p + geom_line(aes(group = Candidate)) + geom_point()

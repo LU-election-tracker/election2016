@@ -37,6 +37,9 @@ funding_groups <- c("All" = "all", "Democrats" = "dem", "Republicans" = "gop")
 # Plot saving options
 image_types <- c("png" = ".png", "jpeg" = ".jpg", "tiff" = ".tif")
 
+# Plot date values
+min_date = "2014-01-01"
+
 # HTTP addresses
 rcp_dem_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_democratic_presidential_nomination-3824.html"
 rcp_gop_address <- "http://www.realclearpolitics.com/epolls/2016/president/us/2016_republican_presidential_nomination-3823.html"
@@ -65,7 +68,6 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
             
             p(h3("Upcoming Features")),
             p("State-by-state map of primary results."),
-            p("Customizable date ranges for all plots."),
             p("Poll summaries on homepage."),
             
             p(h3("What We Do")),
@@ -90,11 +92,19 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                selectInput("dem_plot_data", "Data:", 
                            plot_data
                ),
+               dateRangeInput("dem_date_range", "Date range:",
+                              start = Sys.Date() - 120,
+                              end = Sys.Date() - 3,
+                              min = min_date, 
+                              max = Sys.Date() - 1,
+                              weekstart = 0,
+                              separator = "to",
+                              width = "100%"),
                checkboxGroupInput("dem_selected", "Candidates",
                             choices=dem_candidates,
                             selected=dem_candidates
                             ),
-               actionButton("dem_update", "Update!", width = "100%"),
+               actionButton("dem_update", "Show and update plot!", width = "100%"),
                p(),
                downloadButton("download_dem", "Download"),
                checkboxInput("dem_plot_options", "See download options?", value = FALSE),
@@ -107,7 +117,7 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
              mainPanel(
                plotOutput("dem_plot", height = "450px", width = "850px"
                ),
-               p("Press the Update button to display the graph. Last updated at midnight CST.")
+               p("Press the 'Show and update plot' button to display the graph. Last updated at midnight CST.")
                )
              )
            ),
@@ -121,6 +131,14 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                selectInput("gop_plot_data", "Data:", 
                            plot_data
                ),
+               dateRangeInput("gop_date_range", "Date range:",
+                              start = Sys.Date() - 120,
+                              end = Sys.Date() - 3,
+                              min = min_date, 
+                              max = Sys.Date() - 1,
+                              weekstart = 0,
+                              separator = "to",
+                              width = "100%"),
                checkboxGroupInput("gop_selected", "Candidates",
                                   choices=gop_candidates,
                                   selected=gop_candidates
@@ -138,7 +156,7 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
              mainPanel(
                plotOutput("gop_plot", height = "450px", width = "850px"
                ),
-               p("Press the Update button to display the graph. Last updated at midnight CST.")
+               p("Press the 'Show and update plot' button to display the graph. Last updated at midnight CST.")
                )
              )
            ),
