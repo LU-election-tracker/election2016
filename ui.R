@@ -117,7 +117,8 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
              mainPanel(
                plotOutput("dem_plot", height = "450px", width = "850px"
                ),
-               p("Press the 'Show and update plot' button to display the graph. Last updated at midnight CST.")
+               p("Press the 'Show and update plot' button to display the graph. Last updated at midnight CST."),
+               p()
                )
              )
            ),
@@ -143,7 +144,7 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                                   choices=gop_candidates,
                                   selected=gop_candidates
                ),
-               actionButton("gop_update", "Update!", width = "100%"),
+               actionButton("gop_update", "Show and update plot!", width = "100%"),
                p(),
                downloadButton('download_gop', 'Download'),
                checkboxInput("gop_plot_options", "See download options?", value = FALSE),
@@ -156,7 +157,8 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
              mainPanel(
                plotOutput("gop_plot", height = "450px", width = "850px"
                ),
-               p("Press the 'Show and update plot' button to display the graph. Last updated at midnight CST.")
+               p("Press the 'Show and update plot' button to display the graph. Last updated at midnight CST."),
+               p()
                )
              )
            ),

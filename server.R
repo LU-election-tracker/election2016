@@ -53,6 +53,12 @@ gop_date_range_str <- NULL
 gop_start_date <- NULL
 gop_end_date <- NULL
 
+# Variables for plot colors
+dem_colors <- "Set1"
+dem_color_num <- 3
+gop_colors <- "Set1"
+gop_color_num <- 14
+
 # Sets default plot data to pollster
 dem <- dem_pollster
 gop <- gop_pollster
@@ -98,14 +104,26 @@ shinyServer(
       # Plots using ggplot depending on type of plot
       p <- NULL
       if (input$dem_plot_type == "smooth") {
-        p <- plot_polls_ggplot(dem, plot_type = "smooth", n_colors = 6, set = "RdBu",
-                               start_date = dem_start_date, end_date = dem_end_date)
+        p <- plot_polls_ggplot(dem, 
+                               plot_type = "smooth", 
+                               n_colors = dem_color_num, 
+                               set = dem_colors,
+                               start_date = dem_start_date, 
+                               end_date = dem_end_date)
       } else if (input$dem_plot_type == "line") {
-        p <- plot_polls_ggplot(dem, plot_type = "line", n_colors = 6, set = "RdBu",
-                               start_date = dem_start_date, end_date = dem_end_date)
+        p <- plot_polls_ggplot(dem, 
+                               plot_type = "line", 
+                               n_colors = dem_color_num, 
+                               set = dem_colors,
+                               start_date = dem_start_date, 
+                               end_date = dem_end_date)
       } else if (input$dem_plot_type == "both") {
-        p <- plot_polls_ggplot(dem, plot_type = "both", n_colors = 6, set = "RdBu",
-                               start_date = dem_start_date, end_date = dem_end_date)
+        p <- plot_polls_ggplot(dem, 
+                               plot_type = "both", 
+                               n_colors = dem_color_num, 
+                               set = dem_colors,
+                               start_date = dem_start_date, 
+                               end_date = dem_end_date)
       }
       return(p)
     })
@@ -173,14 +191,26 @@ shinyServer(
       # Plots poll information based on desired type of plot
       p <- NULL
       if (input$gop_plot_type == "smooth") {
-        p <- plot_polls_ggplot(gop, plot_type = "smooth", n_colors = 16, set = "Set1",
-                               start_date = gop_start_date, end_date = gop_end_date)
+        p <- plot_polls_ggplot(gop, 
+                               plot_type = "smooth", 
+                               n_colors = gop_color_num, 
+                               set = gop_colors,
+                               start_date = gop_start_date, 
+                               end_date = gop_end_date)
       } else if (input$gop_plot_type == "line") {
-        p <- plot_polls_ggplot(gop, plot_type = "line", n_colors = 16, set = "Set1",
-                               start_date = gop_start_date, end_date = gop_end_date)
+        p <- plot_polls_ggplot(gop, 
+                               plot_type = "line", 
+                               n_colors = gop_color_num, 
+                               set = gop_colors,
+                               start_date = gop_start_date, 
+                               end_date = gop_end_date)
       } else if (input$gop_plot_type == "both") {
-        p <- plot_polls_ggplot(gop, plot_type = "both", n_colors = 16, set = "Set1",
-                               start_date = gop_start_date, end_date = gop_end_date)
+        p <- plot_polls_ggplot(gop, 
+                               plot_type = "both", 
+                               n_colors = gop_color_num, 
+                               set = gop_colors,
+                               start_date = gop_start_date, 
+                               end_date = gop_end_date)
       }
       return(p)
     })

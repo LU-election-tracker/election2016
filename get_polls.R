@@ -234,7 +234,6 @@ plot_rcp <- function(main_folder, data_folder) {
   
   # Formats data frames and plots party averages over time
   # Removes all polls before CNN poll on 6/28/15
-  # Add some controls for tuning graphics? (dpi, size, etc.)
   dem_plot <- plot_polls_ggplot(format_polls(dem, dem_candidates, "6/28"), main_folder, "rcp_dem.png")
   gop_plot <- plot_polls_ggplot(format_polls(gop, gop_candidates, "6/28"), main_folder, "rcp_gop.png", 
                              n_colors = 16, set = "Set1")
@@ -260,7 +259,7 @@ plot_pollster <- function(main_folder, data_folder) {
 # Plots candidates polling results over a given time by week
 plot_polls_ggplot <- function(df, output_folder = "", plot_name = "", plot_type = "smooth",
                               n_colors = 6, set = "RdBu", xlim = NULL, ylim = NULL,
-                              start_date = NULL, end_date = NULL, dpi = 300) {
+                              start_date = NULL, end_date = NULL, res = 300) {
   
   # Color pallete to extrapolate from
   full_pal <- colorRampPalette(brewer.pal(9, set))
@@ -297,7 +296,7 @@ plot_polls_ggplot <- function(df, output_folder = "", plot_name = "", plot_type 
   
   # Saves to "www" folder as png image if folder and plot name given
   if ((plot_name != "") && (output_folder != "")) {
-    ggsave(file = file.path(output_folder, "www", plot_name, dpi = dpi))
+    ggsave(file = file.path(output_folder, "www", plot_name), dpi = res)
   }
   
   # Explicitly returns plot
