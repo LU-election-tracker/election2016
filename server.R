@@ -42,8 +42,12 @@ dem_funding <-   format_funding(
   read.csv(file.path(data_folder, "os_dem.tsv"), sep = "\t"))
 gop_funding <-   format_funding(
   read.csv(file.path(data_folder, "os_gop.tsv"), sep = "\t"))
-full_funding <-  format_funding(
-  read.csv(file.path(data_folder, "os_full.tsv"), sep = "\t"))
+
+# Joins democrat and republican data instead of reading full funding file.
+# Faster and easier to work with, but ignores independents
+dem_funding$Party <- "Democrat"
+gop_funding$Party <- "Republican"
+full_funding <- rbind(dem_funding, gop_funding)
 
 # Variables for setting date range of plots
 dem_date_range_str <- NULL
@@ -58,6 +62,13 @@ dem_colors <- "Set1"
 dem_color_num <- 3
 gop_colors <- "Set1"
 gop_color_num <- 14
+funding_grayscale <- FALSE
+
+# Variables for plot download size
+# dem_plot_width <- 500
+# dem_plot_height <- 400
+# gop_plot_width <- 500
+# gop_plot_height <- 400
 
 # Sets default plot data to pollster
 dem <- dem_pollster
@@ -155,7 +166,9 @@ shinyServer(
         device <- choose_device(input$dem_img_type, res = input$dem_img_dpi)
         
         # Saves plot to a file using ggsave
-        ggsave(file, plot = dem_input(), device = device)
+        ggsave(file, plot = dem_input(), device = device,
+               width = input$dem_plot_width, 
+               height = input$dem_plot_height)
       }
     )
     
@@ -242,7 +255,9 @@ shinyServer(
         device <- choose_device(input$gop_img_type, res = input$gop_img_dpi)
         
         # Saves plot to a file using ggsave
-        ggsave(file, plot = gop_input(), device = device)
+        ggsave(file, plot = gop_input(), device = device,
+               width = input$gop_plot_width, 
+               height = input$gop_plot_height)
       }
     )
     
@@ -263,14 +278,24 @@ shinyServer(
       else if (input$funding_source == "super_pac") { type <- ylab <- "Super PAC" } 
       else if (input$funding_source == "other") { type <- ylab <- "Other" }
       
+      # Uses grayscale if requested
+      if (input$funding_grayscale) {
+        funding_grayscale <- TRUE
+      } else {
+        funding_grayscale <- FALSE
+      }
+      
       # Plots using ggplot depending on desired group of candidates
       p <- NULL
       if (input$funding_groups == "all") {
-        p <- plot_funding_ggplot(full_funding, type = type, ylab = "")
+        p <- plot_funding_ggplot(full_funding, type = type, ylab = "",
+                                 grayscale = funding_grayscale)
       } else if (input$funding_groups == "dem") {
-        p <- plot_funding_ggplot(dem_funding, type = type, ylab = "")
+        p <- plot_funding_ggplot(dem_funding, type = type, ylab = "",
+                                 grayscale = funding_grayscale)
       } else if (input$funding_groups == "gop") {
-        p <- plot_funding_ggplot(gop_funding, type = type, ylab = "")
+        p <- plot_funding_ggplot(gop_funding, type = type, ylab = "",
+                                 grayscale = funding_grayscale)
       }
       return(p)
     })
@@ -287,7 +312,9 @@ shinyServer(
       },
       content = function(file) {
         device <- choose_device(input$funding_img_type, res = input$funding_img_dpi)
-        ggsave(file, plot = funding_input(), device = device)
+        ggsave(file, plot = funding_input(), device = device,
+               width = input$funding_plot_width, 
+               height = input$funding_plot_height)
       }
     )
   

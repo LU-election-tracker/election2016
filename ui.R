@@ -36,6 +36,8 @@ funding_groups <- c("All" = "all", "Democrats" = "dem", "Republicans" = "gop")
 
 # Plot saving options
 image_types <- c("png" = ".png", "jpeg" = ".jpg", "tiff" = ".tif")
+image_width <- 8
+image_height <- 7
 
 # Plot date values
 min_date = "2014-01-01"
@@ -48,6 +50,7 @@ pollster_gop_address <- "http://elections.huffingtonpost.com/pollster/2016-natio
 os_address <- "https://www.opensecrets.org/pres16/outsidegroups.php"
 git_address <- "https://github.com/LU-election-tracker/election2016"
 loy_address <- "http://aloy.github.io/posts/"
+loy_blog_address <- "http://aloy.github.io/poll-tracking/"
 shiny_address <- "http://shiny.rstudio.com/"
 lawrence_address <- "http://www.lawrence.edu/"
 
@@ -64,7 +67,11 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
            
            mainPanel(
             p(h3("News")),
-            p("Site officially launched on 11/10/15!"),
+            p(strong("12/12/15")),
+            p("An article walking through the creation of this app was posted ",
+              a("here", href = loy_blog_address), ". Check it out!"),
+            p(strong("11/10/15")),
+            p("Site officially launched."),
             
             p(h3("Upcoming Features")),
             p("State-by-state map of primary results."),
@@ -110,7 +117,9 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                checkboxInput("dem_plot_options", "See download options?", value = FALSE),
                conditionalPanel("input.dem_plot_options == true",
                   selectInput("dem_img_type", "Image type:", image_types),
-                  sliderInput("dem_img_dpi", "DPI:", min=100, max=1000, value=300)
+                  sliderInput("dem_img_dpi", "DPI:", min=100, max=1000, value=300),
+                  numericInput("dem_plot_width", "Image width:", image_width),
+                  numericInput("dem_plot_height", "Image height:", image_height)
                ),
                width = 3
              ),
@@ -150,7 +159,9 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                checkboxInput("gop_plot_options", "See download options?", value = FALSE),
                conditionalPanel("input.gop_plot_options == true",
                   selectInput("gop_img_type", "Image type:", image_types),
-                  sliderInput("gop_img_dpi", "DPI:", min=100, max=1000, value=300)
+                  sliderInput("gop_img_dpi", "DPI:", min=100, max=1000, value=300),
+                  numericInput("gop_plot_width", "Image width:", image_width),
+                  numericInput("gop_plot_height", "Image height:", image_height)
                ),
                width = 3
              ),
@@ -172,11 +183,14 @@ shinyUI(navbarPage("LU Election Tracker 2016", theme = shinytheme("cerulean"),
                selectInput("funding_groups", "Candidates:", 
                            choices=funding_groups
                ),
+               checkboxInput("funding_grayscale", "Want a colorblind-friendly plot?", value = FALSE),
                downloadButton('download_funding', 'Download'),
                checkboxInput("funding_plot_options", "See download options?", value = FALSE),
                conditionalPanel("input.funding_plot_options == true",
                   selectInput("funding_img_type", "Image type:", image_types),
-                  sliderInput("funding_img_dpi", "DPI:", min=100, max=1000, value=300)
+                  sliderInput("funding_img_dpi", "DPI:", min=100, max=1000, value=300),
+                  numericInput("funding_plot_width", "Image width:", image_width),
+                  numericInput("funding_plot_height", "Image height:", image_height)
                ),
                width = 3
              ),

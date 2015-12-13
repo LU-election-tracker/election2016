@@ -22,10 +22,36 @@ library(grid)
 ### GLOBAL VARIABLES
 ######
 
+# Candidate names as of summer 2015
 dem_candidates <- c("Clinton", "Sanders", "Biden", "Webb", "O.Malley", "Chafee")
 gop_candidates <- c("Trump", "Carson", "Fiorina", "Rubio", "Bush", "Cruz", 
                     "Kasich", "Christie", "Huckabee", "Paul", "Santorum",
                     "Pataki", "Jindal", "Graham", "Walker")
+
+# Politifact personality profiles for democrats
+clinton_facts <-"http://www.politifact.com/personalities/hillary-clinton/"
+bernie_facts <- "http://www.politifact.com/personalities/bernie-s/"
+omalley_facts <- "http://www.politifact.com/personalities/martin-omalley/"
+dem_facts <- c(clinton_facts, bernie_facts, omalley_facts)
+
+# Politifact personality profiles for republicans
+trump_facts <- "http://www.politifact.com/personalities/donald-trump/"
+carson_facts <- "http://www.politifact.com/personalities/ben-carson/"
+cruz_facts <- "http://www.politifact.com/personalities/ted-cruz/"
+rubio_facts <- "http://www.politifact.com/personalities/marco-rubio/"
+bush_facts <- "http://www.politifact.com/personalities/jeb-bush/"
+fiorina_facts <- "http://www.politifact.com/personalities/carly-fiorina/"
+christie_facts <- "http://www.politifact.com/personalities/chris-christie/"
+pataki_facts <- "http://www.politifact.com/personalities/george-pataki/"
+kasich_facts <- "http://www.politifact.com/personalities/john-kasich/"
+huckabee_facts <- "http://www.politifact.com/personalities/mike-huckabee/"
+santorum_facts <- "http://www.politifact.com/personalities/rick-santorum/"
+graham_facts <- "http://www.politifact.com/personalities/lindsey-graham/"
+paul_facts <- "http://www.politifact.com/personalities/rand-paul/"
+gop_facts <- c(trump_facts, carson_facts, cruz_facts, rubio_facts, bush_facts,
+               fiorina_facts, christie_facts, pataki_facts, kasich_facts,
+               huckabee_facts, santorum_facts, graham_facts, paul_facts)
+
 
 ######
 ### UTILITY FUNCTIONS
@@ -36,6 +62,37 @@ remove_candidates <- function(candidates, df) {
   cn <- colnames(df)
   candidates <- candidates[candidates %in% cn]
   return(candidates)
+}
+
+# Parses a Politifact profile given an http address and the candidate's name.
+# Returns a dataframe of {candidate, ruling, score}, where ruling is a
+# string such as "True" and score is an integer percent.
+# Makes heavy use of stringr package
+parse_fact_profile <- function(address, candidate) {
+  
+  # Gets unordered list containing aggregated scores for each category (e.g. True, False)
+  values <- html(address)
+  values <- values %>% html_node(".scorecard__chartlist") %>% html_text(trim = TRUE)
+  
+  # Removes whitespace, splits list by newline char and removes empty entries
+  values <- values %>% str_replace_all(" ", "") %>% strsplit("\n")
+  values <- values[[1]]
+  values <- values[values != ""]
+  
+  # Gets first integer in string using a regex expression
+  values <- str_extract(values, "\\d+")
+  values <- as.integer(values)
+  
+  # Creates a data frame of candidate name, rulings and their corresponding values
+  rulings <- c("True", "Mostly True", "Half True", "Mostly False", "False", "Pants on Fire")
+  profile <- data.frame(candidate, rulings, values)
+  
+  # Converts values to rounded percentage of their total number of fact-checked statements
+  total <- sum(profile[3])
+  profile$values <- round((profile$values / total)*100)
+  
+  # Explicitly returns profile
+  return(profile)
 }
 
 # Appends years to a col in a dataframe. Assumes date column named "End." Returns data frame. 
@@ -188,6 +245,13 @@ scrape_funding <- function(full_out, dem_out, gop_out) { # Pass in dem/gop candi
   write.table(funding_gop, gop_out, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
+# Scrapes Politifacts for candidate summaries
+scrape_facts <- function(data_folder) {
+
+  # Sample code to check a given candidate profile
+  # ggplot(df, aes(x = rulings, y = values)) + geom_bar(stat = "identity")
+}
+
 # Updates Open Secrets funding information, outputting to the given folder
 update_funding <- function(data_folder) {
   scrape_funding(file.path(data_folder, "os_full.tsv"), 
@@ -335,15 +399,18 @@ plot_funding <- function(main_folder, data_folder) {
   full <-  read.csv(file.path(data_folder, "os_full.tsv"), sep = "\t")
   
   # Formats data frames and plots funding for all candidates and by party
-  dem_plot <- plot_funding_ggplot(format_funding(dem), main_folder, "dem_funding.png")
-  gop_plot <- plot_funding_ggplot(format_funding(gop), main_folder, "gop_funding.png")
-  full_plot <- plot_funding_ggplot(format_funding(full), main_folder, "full_funding.png")
+  dem_plot <- plot_funding_ggplot(format_funding(dem), main_folder, "dem_funding.png",
+                                  grayscale = TRUE)
+  gop_plot <- plot_funding_ggplot(format_funding(gop), main_folder, "gop_funding.png",
+                                  grayscale = TRUE)
+  full_plot <- plot_funding_ggplot(format_funding(full), main_folder, "full_funding.png",
+                                   grayscale = TRUE)
 }
 
 # Plots candidates funding totals. If type is set to default, sums all values into
 # a single number per candidate. Else, only displays given type of funding
 plot_funding_ggplot <- function(df, main_folder = "", plot_name = "", type = "All",
-                                xlab = "", ylab = "") {
+                                xlab = "", ylab = "", grayscale = FALSE) {
   
   # Sets type of funding to display. "All" sums all values and "other" cuts 
   # non-campaign and super pac funds
@@ -357,11 +424,18 @@ plot_funding_ggplot <- function(df, main_folder = "", plot_name = "", type = "Al
   
   # Standard bar plot, summing all values for a given type of funding per candidate
   p <- ggplot(df, aes(x=reorder(Candidate, Total, function(x) -1*(sum(x))), y=Total)) + 
-    geom_bar(stat = "identity") + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
           axis.text.y = element_text(size = 15)) + 
     scale_y_continuous(labels = dollar) + 
-    labs(x = "", y = ylab) 
+    labs(x = "", y = ylab)
+  
+  # Sets colors of plot, red/blue for gop/dem or grayscale if specified
+  if (grayscale) {
+    p <- p + geom_bar(stat = "identity")
+  } else {
+    p <- p + geom_bar(aes(fill = Party), stat = "identity") +
+      scale_fill_manual(values=c("#005FAD", "#ED1C25"))
+  }
   
   # Saves to "www" folder as png image if folder and plot name given
   if ((plot_name != "") && (main_folder != "")) {

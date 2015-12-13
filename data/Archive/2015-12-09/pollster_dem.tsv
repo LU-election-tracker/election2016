@@ -1,10 +1,5 @@
 Pollster	Start	End	Pop.	Clinton	Sanders	O.Malley	Biden	Chafee	Lessig	Webb	Undecided
-Ipsos/Reuters	12/5	12/9	573A	56	30	5	-	-	-	-	9
-YouGov/Economist	12/4	12/9	647LV	56	35	2	-	-	-	-	5
-GravisMarketing/OneAmericaNews	12/7	12/8	731LV	62	30	9	-	-	-	-	-
-CBS/Times	12/4	12/8	384LV	52	32	2	-	-	-	-	9
 MorningConsult	12/3	12/7	808RV	52	23	2	-	-	-	-	14
-PublicReligionResearchInstitute	12/2	12/6	463RV	52	31	4	-	-	-	-	13
 Suffolk/USAToday	12/2	12/6	363LV	56	29	4	-	-	-	-	11
 IBD/TIPP	11/30	12/4	392RV	51	33	1	-	-	-	-	8
 Ipsos/Reuters	11/28	12/2	430A	51	36	4	-	-	-	-	10
@@ -99,3 +94,8 @@ Ipsos/Reuters	8/1	8/5	409A	52	17	1	14	1	-	0	11
 Zogby(Internet)/UniversityofAkron	8/3	8/4	459LV	48	15	3	21	-	-	2	10
 YouGov/Economist	7/31	8/4	635RV	51	21	1	13	1	-	2	10
 MorningConsult	7/31	8/3	860RV	60	16	2	-	1	-	2	13
+FOX	7/30	8/2	499LV	51	22	1	13	1	-	1	6
+MonmouthUniversity	7/30	8/2	429RV	52	16	2	12	0	-	2	14
+CBS	7/29	8/2	362LV	58	17	1	11	1	-	2	7
+NBC/WSJ	7/26	7/30	252LV	59	25	3	-	1	-	3	8
+GravisMarketing/OneAmericaNews	7/29	7/29	803LV	55	18	3	8	2	-	5	-
