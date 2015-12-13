@@ -292,10 +292,12 @@ shinyServer(
                                  grayscale = funding_grayscale)
       } else if (input$funding_groups == "dem") {
         p <- plot_funding_ggplot(dem_funding, type = type, ylab = "",
-                                 grayscale = funding_grayscale)
+                                 grayscale = funding_grayscale,
+                                 party = "dem")
       } else if (input$funding_groups == "gop") {
         p <- plot_funding_ggplot(gop_funding, type = type, ylab = "",
-                                 grayscale = funding_grayscale)
+                                 grayscale = funding_grayscale,
+                                 party = "gop")
       }
       return(p)
     })

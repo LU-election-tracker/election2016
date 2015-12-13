@@ -1,8 +1,8 @@
 name: election2016
 account: henryw
 server: shinyapps.io
-bundleId: 327766
+bundleId: 329770
 url: https://henryw.shinyapps.io/election2016
-when: 1449689744.05479
+when: 1449983124.74485
 asMultiple: FALSE
 asStatic: FALSE

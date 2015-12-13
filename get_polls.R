@@ -410,7 +410,8 @@ plot_funding <- function(main_folder, data_folder) {
 # Plots candidates funding totals. If type is set to default, sums all values into
 # a single number per candidate. Else, only displays given type of funding
 plot_funding_ggplot <- function(df, main_folder = "", plot_name = "", type = "All",
-                                xlab = "", ylab = "", grayscale = FALSE) {
+                                xlab = "", ylab = "", grayscale = FALSE,
+                                party = "") {
   
   # Sets type of funding to display. "All" sums all values and "other" cuts 
   # non-campaign and super pac funds
@@ -429,12 +430,20 @@ plot_funding_ggplot <- function(df, main_folder = "", plot_name = "", type = "Al
     scale_y_continuous(labels = dollar) + 
     labs(x = "", y = ylab)
   
-  # Sets colors of plot, red/blue for gop/dem or grayscale if specified
+  # Sets colors of plot, red/blue for gop/dem or grayscale if specified.
+  # If only one party present, checks if a party name was given. 
+  # Defaults to blue first, red second and green third.
   if (grayscale) {
     p <- p + geom_bar(stat = "identity")
   } else {
-    p <- p + geom_bar(aes(fill = Party), stat = "identity") +
-      scale_fill_manual(values=c("#005FAD", "#ED1C25"))
+    p <- p + geom_bar(aes(fill = Party), stat = "identity")
+    if (party == "dem") {
+      p <- p + scale_fill_manual(values=c("#005FAD"))
+    } else if (party == "gop") {
+      p <- p + scale_fill_manual(values=c("#ED1C25"))
+    } else {
+      p <- p + scale_fill_manual(values=c("#005FAD", "#ED1C25", "#00FF00"))
+    }
   }
   
   # Saves to "www" folder as png image if folder and plot name given
