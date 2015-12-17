@@ -231,7 +231,7 @@ scrape_pollster <- function(pollster_address, out_file) {
 # Scrapes the Open Secrets website for funding information
 scrape_funding <- function(full_out, dem_out, gop_out) { # Pass in dem/gop candidate list?
   
-  # Readings funding data as a data frame
+  # Reads funding data as a data frame
   opensecrets <- html("https://www.opensecrets.org/pres16/outsidegroups.php")
   funding <- opensecrets %>% html_node("table") %>% html_table()
   
@@ -426,7 +426,10 @@ plot_funding_ggplot <- function(df, main_folder = "", plot_name = "", type = "Al
   # Standard bar plot, summing all values for a given type of funding per candidate
   p <- ggplot(df, aes(x=reorder(Candidate, Total, function(x) -1*(sum(x))), y=Total)) + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
-          axis.text.y = element_text(size = 15)) + 
+          axis.text.y = element_text(size = 15),
+          legend.key.size = unit(0.8, "cm"),
+          legend.text = element_text(size = 15),
+          legend.title = element_text(size = 15)) + 
     scale_y_continuous(labels = dollar) + 
     labs(x = "", y = ylab)
   
