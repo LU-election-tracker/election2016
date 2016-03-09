@@ -1,8 +1,7 @@
-Poll	Start	End	Sample	Type	MoE	Clinton	Sanders	O'Malley	Spread
-RCP Average	11/27	12/13	NA	--	--	55.3	31.2	2.8	Clinton +24.1
-MonmouthMonmouth	12/10	12/13	374	RV	5.1	59	26	4	Clinton +33
-NBC/WSJNBC/WSJ	12/6	12/9	400	LV	4.9	56	37	4	Clinton +19
-CBS/NY TimesCBS/NYT	12/4	12/8	384	LV	6.0	52	32	2	Clinton +20
-USA Today/SuffolkUSA Today	12/2	12/6	363	LV	5.1	56	29	4	Clinton +27
-IBD/TIPPIBD/TIPP	11/30	12/4	345	RV	5.4	51	33	1	Clinton +18
-CNN/ORCCNN/ORC	11/27	12/1	403	RV	5.0	58	30	2	Clinton +28
+Poll	Start	End	Sample	Type	MoE	Clinton	Sanders	Spread
+RCP Average	2/19	3/6	NA	--	--	51	39.6	Clinton +11.4
+NBC News/Wall St. JrnlNBC/WSJ	3/3	3/6	410	LV	4.8	53	44	Clinton +9
+ABC News/Wash PostABC/WP	3/3	3/6	NA	RV	5.5	49	42	Clinton +7
+CNN/ORCCNN/ORC	2/24	2/27	427	RV	5.0	55	38	Clinton +17
+Rasmussen ReportsRasmussen	2/25	2/28	541	LV	4.5	53	31	Clinton +22
+IBD/TIPPIBD/TIPP	2/19	2/24	334	RV	5.5	45	43	Clinton +2

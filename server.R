@@ -1,17 +1,13 @@
-
-library(shinyjs)
-library(Cairo)
-
-###### Note to self: look into population pyramids
+# Election tracker's Shiny server. 
+#
+# Written by Henry Ward and Adam Loy, 2015.
+# Licensed under the MIT license (tldrlegal.com/license/mit-license)
 
 
 ######
-### VARIABLES, UTILITY FUNCTIONS AND CALLS
+### VARIABLES, UTILITY FUNCTIONS AND PREP
 ######
 
-# Assumes tracking file in same folder
-tracking <- 'get_polls.R'
-source(tracking)
 
 # Gets parent folder
 main_folder <- "./"
@@ -20,14 +16,14 @@ data_folder <- file.path(main_folder, "data")
 # Opens and formats RCP poll data for democrats
 dem_rcp <- read.csv(file.path(data_folder, "rcp_dem_full.tsv"), sep = "\t")
 rcp_row <- which(apply(dem_rcp, 1, function(x) any(grepl("RCP Average", x))))
-dem_rcp <- dem_rcp[-c(rcp_row),]
-dem_rcp <- format_polls(dem_rcp, dem_candidates, "3/29")
+dem_rcp <- dem_rcp[-c(rcp_row), ]
+dem_rcp <- format_polls(dem_rcp, dem_candidates)
 
 # Opens and formats RCP poll data for republicans
 gop_rcp <- read.csv(file.path(data_folder, "rcp_gop_full.tsv"), sep = "\t")
 rcp_row <- which(apply(gop_rcp, 1, function(x) any(grepl("RCP Average", x))))
-gop_rcp <- gop_rcp[-c(rcp_row),]
-gop_rcp <- format_polls(gop_rcp, gop_candidates, "3/29")
+gop_rcp <- gop_rcp[-c(rcp_row), ]
+gop_rcp <- format_polls(gop_rcp, gop_candidates)
 
 # Opens and formats Pollster poll data
 dem_pollster <- read.csv(file.path(data_folder, "pollster_dem.tsv"), sep = "\t")
@@ -36,6 +32,12 @@ colnames(dem_pollster)[1] <- "Poll"
 colnames(gop_pollster)[1] <- "Poll"
 dem_pollster <- format_polls(dem_pollster, dem_candidates, format_dates = FALSE)
 gop_pollster <- format_polls(gop_pollster, gop_candidates, format_dates = FALSE)
+
+# Gets election summary data
+summary_string <- election_summary_string(data_folder, full = TRUE)
+
+# Opens politifacts data
+facts <- read.csv(file.path(data_folder, "politifact_data.tsv"), sep = "\t")
 
 # Variables for plotting funding info with ggplot
 dem_funding <-   format_funding(
@@ -64,12 +66,6 @@ gop_colors <- "Set1"
 gop_color_num <- 14
 funding_grayscale <- FALSE
 
-# Variables for plot download size
-# dem_plot_width <- 500
-# dem_plot_height <- 400
-# gop_plot_width <- 500
-# gop_plot_height <- 400
-
 # Sets default plot data to pollster
 dem <- dem_pollster
 gop <- gop_pollster
@@ -79,6 +75,7 @@ gop <- gop_pollster
 ### SERVER
 ######
 
+
 shinyServer(
   
   # Code here is run once when app is launched
@@ -86,6 +83,16 @@ shinyServer(
   function(input, output) {
       
     # Code here is run each time user visits app
+    
+    ### Homepage functions
+    
+    # Download handler for democrat plot download
+    output$download_summary <- downloadHandler(
+      filename = "election_summary.txt",
+      content = function(file) {
+        write(summary_string, file)
+      }
+    )
     
     ### Democrat plotting functions
     
@@ -275,7 +282,7 @@ shinyServer(
       type <- ylab <- ""
       if (input$funding_source == "all") { type <- ylab <- "All" } 
       else if (input$funding_source == "campaign") { type <- ylab <- "Campaign" } 
-      else if (input$funding_source == "super_pac") { type <- ylab <- "Super PAC" } 
+      else if (input$funding_source == "super_pac") { type <- ylab <- "SuperPAC" } 
       else if (input$funding_source == "other") { type <- ylab <- "Other" }
       
       # Uses grayscale if requested
@@ -319,5 +326,57 @@ shinyServer(
                height = input$funding_plot_height)
       }
     )
+    
+    ### Politifact plotting functions
+    
+    # Updates input for funding plot and chooses plotting function
+    facts_input <- reactive({
+      
+      # Updates candidate list
+      # TODO - update candidates faster
+      candidates <- setdiff(all_candidates, updated_all())
+      for (c in candidates) {
+        facts <- subset(facts, Candidate != c)
+      }
+      
+      # Plots using ggplot depending on desired group of candidates
+      p <- plot_facts_ggplot(facts)
+      return(p)
+    })
+    
+    # Prints politifact candidate comparison plot
+    output$facts_plot <- renderPlot({
+      print(facts_input())
+    })
+    
+    # Disables download and file options initially
+    disable("download_facts")
+    disable("facts_plot_options")
+    
+    # Enables download and file options if there is a plot
+    observe({
+      if (input$facts_update > 0) {
+        enable("download_facts")
+        enable("facts_plot_options")
+      }
+    })
+    
+    # Download handler for funding plot download
+    output$download_facts <- downloadHandler(
+      filename = function() {
+        paste("facts", input$funding_img_type, sep='') 
+      },
+      content = function(file) {
+        device <- choose_device(input$facts_img_type, res = input$facts_img_dpi)
+        ggsave(file, plot = facts_input(), device = device,
+               width = input$facts_plot_width, 
+               height = input$facts_plot_height)
+      }
+    )
+    
+    # Gets updated list of all candidates from user
+    updated_all <- eventReactive(input$facts_update, {
+      input$facts_selected
+    })
   
 })

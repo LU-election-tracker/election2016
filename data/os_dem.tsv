@@ -1,23 +1,25 @@
-Candidate	Organization	Type	Total Raised
-Biden	Draft Biden 2016	Super PAC	$85,880
-Clinton	Ready PAC	Carey	$3,180,593
-Clinton	Faith Voters PAC	Super PAC	$2,640
-Clinton	Future45	Super PAC	$600,000
-Clinton	45Committee	527	$0
-Clinton	It's About Killary	Super PAC	$0
-Clinton	Priorities USA Action	Super PAC	$15,654,458
-Clinton	America's Teachers	Super PAC	$1,498
-Clinton	African Americans for Hillary	Super PAC	$0
-Clinton	No to HRC 2016	Super PAC	$0
-Clinton	America Rising PAC	Super PAC	$0
-Clinton	Balance of Power PAC	Super PAC	$17,392
-Clinton	BillForFirstLady2016.Com	Super PAC	$0
-Clinton	Hilary Shmilary PAC	Super PAC	$0
-Clinton	Dick Morris' Just Say no to Her!	Super PAC	$0
-Clinton	Women Against Hillary	Super PAC	$0
-Clinton	Hillary for America	Campaign	$77,471,604
-Clinton	Correct the Record	Carey	$1,435,098
-Sanders	BillionairesForBernie.org	Super PAC	$0
-Sanders	Collective Actions PAC	Super PAC	$8,795
-Sanders	Progressive Voters of America	Leadership PAC	$16,249
-Sanders	Bernie 2016	Campaign	$41,463,784
+Candidate	Organization	Revolvers*	Type	Total Raised	Outside
+Biden	Draft Biden 2016	0	SuperPAC	$1,024,463	0
+Clinton	America's Teachers	0	SuperPAC	$1,828	0
+Clinton	Women Against Hillary	0	SuperPAC	$154	0
+Clinton	Blue Answer PAC	0	SuperPAC	$180,922	0
+Clinton	America Rising PAC	0	SuperPAC	$0	0
+Clinton	Balance of Power PAC	0	SuperPAC	$19,156	0
+Clinton	BillForFirstLady2016.Com	0	SuperPAC	$0	0
+Clinton	Hilary Shmilary PAC	0	SuperPAC	$0	0
+Clinton	Dick Morris' Just Say no to Her!	0	SuperPAC	$0	0
+Clinton	African Americans for Hillary	0	SuperPAC	$0	0
+Clinton	No to HRC 2016	0	SuperPAC	$0	0
+Clinton	Faith Voters PAC	0	SuperPAC	$11,640	0
+Clinton	Ready PAC	6	Carey	$3,465,425	1
+Clinton	45Committee	0	501c4	0N/A	0
+Clinton	It's About Killary	0	SuperPAC	$0	0
+Clinton	Priorities USA Action	14	SuperPAC	$50,632,863	3
+Clinton	Hillary for America	0	Campaign	$130,443,637	0
+Clinton	Correct the Record	4	Carey	$3,436,572	4
+Sanders	Feel Bern	0	SuperPAC	$11,999	0
+Sanders	BillionairesForBernie.org	0	SuperPAC	$0	0
+Sanders	Bernie 2016	0	Campaign	$96,311,423	0
+Sanders	Las Cruces for Bernie	0	SuperPAC	$1,323	0
+Sanders	Collective Actions PAC	0	SuperPAC	$8,795	0
+Sanders	Progressive Voters of America	0	Leadership PAC	$23,116	0

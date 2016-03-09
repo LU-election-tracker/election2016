@@ -1,9 +1,7 @@
-Poll	Start	End	Trump	Cruz	Rubio	Carson	Bush	Christie	Kasich	Fiorina	Paul	Huckabee	Graham	Pataki	Santorum	Spread
-RCP Average	11/27	12/13	33	16.1	12.6	12	4	2.9	2.3	2.3	2.1	2	0.3	0.2	0.2	Trump +16.9
-ABC News/Wash PostABC/WP	12/10	12/13	38	15	12	12	5	4	2	1	2	1	1	0	0	Trump +23
-MonmouthMonmouth	12/10	12/13	41	14	10	9	3	2	3	2	2	2	1	1	0	Trump +27
-NBC/WSJNBC/WSJ	12/6	12/9	27	22	15	11	7	3	2	5	2	3	--	--	--	Trump +5
-CBS/NY TimesCBS/NYT	12/4	12/8	35	16	9	13	3	3	3	1	4	3	0	0	0	Trump +19
-USA Today/SuffolkUSA Today	12/2	12/6	27	17	16	10	4	2	2	1	2	1	0	0	1	Trump +10
-IBD/TIPPIBD/TIPP	11/30	12/4	27	13	14	15	3	2	2	3	2	2	0	--	0	Trump +12
-CNN/ORCCNN/ORC	11/27	12/1	36	16	12	14	3	4	2	3	1	2	0	0	0	Trump +20
+Poll	Start	End	Sample	Trump	Cruz	Rubio	Kasich	Carson	Spread
+RCP Average	2/19	3/6	--	36	20.8	18.6	12	8.7	Trump +15.2
+NBC News/Wall St. JrnlNBC/WSJ	3/3	3/6	397 LV	30	27	20	22	--	Trump +3
+ABC News/Wash PostABC/WP	3/3	3/6	RV	34	25	18	13	--	Trump +9
+CNN/ORCCNN/ORC	2/24	2/27	427 RV	49	15	16	6	10	Trump +33
+IBD/TIPPIBD/TIPP	2/19	2/24	400 RV	31	20	18	7	8	Trump +11
+Rasmussen ReportsRasmussen	2/21	2/22	697 LV	36	17	21	12	8	Trump +15
