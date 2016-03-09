@@ -15,6 +15,7 @@ data_folder <- file.path(main_folder, "data")
 
 # Sources main functions and loads scripts
 election_main <- file.path("src", "election_main.R")
+source(election_main)
 load_scripts(main_folder)
 
 
